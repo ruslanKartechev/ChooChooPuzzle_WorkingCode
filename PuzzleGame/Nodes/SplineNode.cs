@@ -2,27 +2,55 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-
+using System.Linq;
 namespace PuzzleGame
 {
-    public interface ISplineFollower
-    {
-        Transform GetTransform();
-        bool PushFromNode(Vector2 dir);
-    }
-
-
 
     public class SplineNode : MonoBehaviour
     {
+        [SerializeField] private bool HasAngleConstr;
+        [SerializeField] private AngleConstraint AngleConst;
         public List<SplineNode> linkedNodes;
+        private List<IConstrained> mConstraints = new List<IConstrained>();
+
+
+
         public Vector3 _position { get { return transform.position; } }
-        public bool IsOccupied { get { 
-                if (currentFollower == null) 
-                    return false; 
-                else 
-                    return true; } }
+        public bool IsOccupied
+        {
+            get
+            {
+                if (currentFollower == null)
+                    return false;
+                else
+                    return true;
+            }
+        }
         public ISplineFollower currentFollower { get; set; }
+        public List<IConstrained> _Constraints { get { return mConstraints; } }
+
+
+        private void Start()
+        {
+            AddBaseConstr();
+            if (HasAngleConstr)
+                AddAngleConstr();
+        }
+
+        #region Constraints
+        private void AddBaseConstr()
+        {
+            BaseConstraint bc = new BaseConstraint();
+            mConstraints.Add(bc);
+        }
+        private void AddAngleConstr()
+        {
+            mConstraints.Add(AngleConst);
+        }
+
+        #endregion
+
+
 
 
         public void ConnectNode(SplineNode node)
@@ -48,7 +76,6 @@ namespace PuzzleGame
                 currentFollower = follower;
                 return true;
             }
-            Debug.Log("already occupied");
             return false;
         }
         public void SetCurrentFollowerForce(ISplineFollower follower) => currentFollower = follower;
@@ -57,6 +84,10 @@ namespace PuzzleGame
         {
             currentFollower = null;
         }
+
+
+
+
 
 
     }
@@ -72,12 +103,22 @@ namespace PuzzleGame
             SplineNode me = target as SplineNode;
             
             DrawLinks(me);
+            GUILayout.BeginHorizontal();
+    
+            GUILayout.EndHorizontal();
+
+            serializedObject.Update();
+            ConstraintEditorList.Show(serializedObject.FindProperty("_Constraints"));
+            serializedObject.ApplyModifiedProperties();
+
         }
+
         private void OnSceneGUI()
         {
             SplineNode me = target as SplineNode;
             DrawLinks(me);
         }
+
         public void DrawLinks(SplineNode me )
         {
             Handles.color = Color.red;
@@ -91,6 +132,24 @@ namespace PuzzleGame
             }
         }
     }
+
+
+
+
+    public static class ConstraintEditorList
+    {
+        public static void Show(SerializedProperty list)
+        {
+            if (list == null) return;
+            EditorGUILayout.PropertyField(list);
+            for(int i =0; i<list.arraySize; i++)
+            {
+                EditorGUILayout.PropertyField(list.GetArrayElementAtIndex(i));
+            }
+            EditorGUI.indentLevel -= 1;
+        }
+    }
+
 
 #endif
 }

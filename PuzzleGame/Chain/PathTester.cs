@@ -17,13 +17,13 @@ namespace PuzzleGame
     public class PathTester : UnitSplineFollower
     {
         [SerializeField] private GameObject model;
-        public ChainFollowerController _Controller;
+        public ChainController _Controller;
         public MoveData currentData;
         [HideInInspector] public bool IsVilisble = true;
 
         
 
-        public void Init(ChainFollowerController controller, FollowerSettings settings)
+        public void Init(ChainController controller, FollowerSettings settings)
         {
             _Controller = controller;
             InitSettings(settings);
@@ -76,24 +76,21 @@ namespace PuzzleGame
         {
             if (_Controller.leadingFollower == null)
             {
-                //Debug.Log("<color=blue>need new lead follower</color>");
                 FindNewLead(input);
             }
             currentNode = _Controller.leadingFollower.currentNode;
-            SplineNode temp = null;
-            //Debug.Log("current node: " + currentNode.gameObject.name);
-            temp = FindNextNode(input, currentNode);
-            if (temp == null)
+
+            ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
+            if (result.Allowed == false || result.Options == null)
             {
-                Debug.Log("next node is null");
+      
                 return false;
             }
 
-   
+            SplineNode temp = NodeSeeker.FindNextNode(input, currentNode, result.Options);
 
             if (IsChainOccupied(temp))
             {
-                //Debug.Log("<color=red>Chain occupied, Going backwards</color>");
                 FindNewLead(input);
                 return base.SetSegment(input);
             }
@@ -168,14 +165,12 @@ namespace PuzzleGame
             bool allow = currentSegment.end.PushFromNode(input);
             if(allow == false)
             {
-                Debug.Log("<color=red>not allowed to move further</color>");
+                //Debug.Log("<color=red>NOT Allowed to Push Further</color>");
                 return;
             }
-
+            _Controller.MoveChain(currentSegment.end);
+            transform.position = currentSegment.end._position;
             ResetCurrentNode(currentSegment.end);
-            transform.position = currentNode._position;
-            //currentSegment = null;
-            _Controller.MoveChainFollwoers(currentNode);
             onMove = SetSegment;
         }
 

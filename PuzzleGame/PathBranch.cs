@@ -29,10 +29,13 @@ namespace PuzzleGame
 
         private void Start()
         {
+           
+        }
+        private void OnEnable()
+        {
             if (AutoConnect)
                 SetNodeNeighbours();
         }
-
 
         public void AddPoint()
         {
@@ -73,11 +76,11 @@ namespace PuzzleGame
             n.position = prev.position - prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Insert(0,n);
         }
-        private void ReName()
+        public void ReName()
         {
             if (_transforms.Count == 0) return;
             for (int i = 0; i < _transforms.Count; i++)
-                _transforms[i].name = gameObject.name + (i + 1).ToString();
+                _transforms[i].name = "Node + " + (i + 1).ToString();
         }
 
         public void SpaceFromLast()
@@ -257,8 +260,14 @@ namespace PuzzleGame
             GUILayout.EndHorizontal();
 
             GUILayout.Space(10);
+
+            if (GUILayout.Button("RenameAll"))
+                me.ReName();
+            GUILayout.Space(10);
             if (GUILayout.Button("SetNeighbours"))
                 me.SetNodeNeighbours();
+
+      
         }
 
 

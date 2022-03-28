@@ -77,7 +77,7 @@ namespace PuzzleGame
         protected virtual bool SetSegment(Vector2 input)
         {
             if (input == Vector2.zero) { Debug.Log("zero input"); return false; }
-            SplineNode res = FindNextNode(input);
+            SplineNode res = NodeSeeker.FindNextNode(input, currentNode);
             if (res == null)
             {
                 DebugMovement("Next node NOT found");
@@ -88,7 +88,7 @@ namespace PuzzleGame
                 currentSegment = new Segment(currentNode, res);
                 onMove = MoveAlongSegment;
                 return true;
-            }            
+            }
         }
 
         protected virtual bool MoveAlongSegment(Vector2 input)
@@ -100,7 +100,7 @@ namespace PuzzleGame
             {
                 percent += _settings.moveSpeed / 100;
                 Mathf.Clamp01(percent);
-                if(percent >= 0.9f)
+                if (percent >= 0.9f)
                 {
                     //DebugMovement("percent >= 50");
                     //SnapToNode(currentSegment.end);
@@ -164,7 +164,7 @@ namespace PuzzleGame
         }
         protected virtual void SnapToNode(SplineNode node)
         {
-            if(currentSegment == null)
+            if (currentSegment == null)
             {
                 DebugMovement("Segment is zero");
                 return;
@@ -173,12 +173,12 @@ namespace PuzzleGame
             onMove = null;
             float time = _settings.totalSnapTime;
             float dist = (transform.position - node._position).magnitude;
-            time *= Mathf.Clamp01(dist / currentSegment.Distance); 
+            time *= Mathf.Clamp01(dist / currentSegment.Distance);
             StopNodeSnapping();
-            if(time > 0)
-                nodeSnapping = StartCoroutine(SnappingToNode(node.transform,time));
-            
-           // currentNode = node;
+            if (time > 0)
+                nodeSnapping = StartCoroutine(SnappingToNode(node.transform, time));
+
+            // currentNode = node;
             currentSegment = null; // setting segment to null
         }
 
@@ -195,7 +195,7 @@ namespace PuzzleGame
         public virtual void MoveByDir(Vector2 input)
         {
             //SetSegment(input);
-            SplineNode res = FindNextNode(input,GetLastNode());
+            SplineNode res = NodeSeeker.FindNextNode(input, GetLastNode());
             if (res == null) { Debug.Log("Next node not found"); return; }
             //if (moveList.Contains(res) == false)
             //    moveList.Add(res);
@@ -207,7 +207,7 @@ namespace PuzzleGame
             currentSegment = null;
         }
 
-        public virtual void MoveToNode(SplineNode node)
+        public virtual void MoveToNode(SplineNode node, Action onEnd = null)
         {
             if (node == null) { Debug.Log("Null node passed"); return; }
             if (nodeSnapping != null) StopCoroutine(nodeSnapping);
@@ -220,23 +220,23 @@ namespace PuzzleGame
             nextNode = node;
             currentNode = nextNode;
             OccupyNode();
-            nodeSnapping = StartCoroutine(SnappingToNode(node.transform, listMoveTime));
+            nodeSnapping = StartCoroutine(SnappingToNode(node.transform, listMoveTime, onEnd));
 
         }
         public virtual void StopMovingToNode()
         {
-            if (nodeSnapping != null) StopCoroutine(nodeSnapping);
-            if(nextNode != null)
-            {
-                Debug.Log("next not null");
-            }
+            //if (nodeSnapping != null) StopCoroutine(nodeSnapping);
+            //if (nextNode != null)
+            //{
+            //    Debug.Log("next not null");
+            //}
         }
         //protected virtual IEnumerator MovingAlongNodes()
         //{
         //    while (moveList.Count > 0)
         //    {
         //        CustomSplineNode next = moveList[0];
-             
+
         //        yield return SnappingToNode(next.transform, listMoveTime);
         //        currentNode = next;
         //        moveList.Remove(next);
@@ -246,7 +246,7 @@ namespace PuzzleGame
 
 
 
-        protected virtual IEnumerator SnappingToNode(Transform node,float time)
+        protected virtual IEnumerator SnappingToNode(Transform node, float time, Action onEnd = null)
         {
             Vector3 start = transform.position;
             Vector3 end = node.position;
@@ -260,6 +260,7 @@ namespace PuzzleGame
             transform.position = end;
             // ?? 
             nextNode = null;
+            onEnd?.Invoke();
         }
 
         public SplineNode GetLastNode()
@@ -268,85 +269,18 @@ namespace PuzzleGame
             else
                 return moveList[moveList.Count - 1];
         }
-        
+
         public virtual void OccupyNode()
         {
             if (currentNode == null) return;
-            if(OccupyNodes)
+            if (OccupyNodes)
                 currentNode.SetCurrentFollower(this);
         }
 
 
         #region FindingNodes
-        
-        public SplineNode FindNextNode(Vector2 input, SplineNode from = null)
-        {
-            if (from == null)
-                from = currentNode;
 
-            if (from.linkedNodes.Count == 1)
-                return from.linkedNodes[0];
 
-            if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
-            {
-                var res = new List<SplineNode>();
-                if (input.x >= 0)
-                    res = GetHorNodes(true, from);
-                else
-                    res = GetHorNodes(false, from);
-                if (res == null || res.Count == 0) { DebugMovement("no more right or left nodes"); return null; }
-
-                SplineNode n = res[0];
-                if (res.Count > 1)
-                {
-                    if (input.y >= 0)
-                        n = res.Find(x => x.transform.position.y >= transform.position.y);
-                    else
-                        n = res.Find(x => x.transform.position.y < transform.position.y);
-                }
-                return n;
-            }
-            else
-            {
-                var res = new List<SplineNode>();
-                if (input.x >= 0)
-                    res = GetVertNodes(true, from);
-                else
-                    res = GetVertNodes(false, from);
-                if (res == null || res.Count == 0) { DebugMovement("no more up or down nodes"); return null; }
-
-                SplineNode n = res[0];
-                if (res.Count > 1)
-                {
-                    if (input.x >= 0)
-                        n = res.Find(x => x.transform.position.x >= transform.position.x);
-                    else
-                        n = res.Find(x => x.transform.position.x < transform.position.x);
-                }
-                return n;
-            }
-            return null;
-  
-        }
-
-        public List<SplineNode> GetHorNodes(bool right, SplineNode from)
-        {
-            var res = new List<SplineNode>();
-            if (right)
-                res = from.linkedNodes.FindAll(x => x.transform.position.x >= transform.position.x);
-            else
-                res = from.linkedNodes.FindAll(x => x.transform.position.x < transform.position.x);
-            return res;
-        }
-        public List<SplineNode> GetVertNodes(bool up, SplineNode from)
-        {
-            var res = new List<SplineNode>();
-            if (up)
-                res = from.linkedNodes.FindAll(x => x.transform.position.y >= transform.position.y);
-            else
-                res = from.linkedNodes.FindAll(x => x.transform.position.y < transform.position.y);
-            return res;
-        }
 
         #endregion
 
@@ -360,4 +294,5 @@ namespace PuzzleGame
         }
 
     }
+
 }

@@ -20,7 +20,7 @@ namespace PuzzleGame
     }
     public class ChainFollower : UnitSplineFollower
     {
-        public ChainFollowerController _Controller;
+        public ChainController _Controller;
         public MoveData currentData;
 
         public List<ChainFollower> _links = new List<ChainFollower>();
@@ -32,7 +32,7 @@ namespace PuzzleGame
             onMove = SetSegment;
         }
 
-        public void Init(ChainFollowerController controller, FollowerSettings settings)
+        public void Init(ChainController controller, FollowerSettings settings)
         {
             _Controller = controller;
             InitSettings(settings);
@@ -50,7 +50,8 @@ namespace PuzzleGame
             bool can = false;
             _Controller.leadingFollower = this;
             ChainFollower end = _Controller.GetOtherEnd();
-            end.PushForward();
+            can = end.PushForward();
+            _Controller.StartMovingChain();
             return can;
         }
 
@@ -68,52 +69,50 @@ namespace PuzzleGame
         {
             _Controller.OnRelease();
         }
-
-        public bool AllowNextSegment(Vector2 input)
-        {
-            return SetSegment(input);
-        }
-
         public bool PushForward()
         {
-            Vector2 dir = transform.position - _links[0].transform.position;
+            _Controller.leadingFollower = this;
             SplineNode node = FindFreeNode();
             if (node == null)
                 return false;
             else
             {
-                MoveLead(node);
+                MoveLead(node, OnPushEnd);
                 return true;
             }
         }
+        private void OnPushEnd()
+        {
+            _Controller.StopMovingChain();
+        }
 
-        public void MoveChain(ChainFollower caller, SplineNode node)
+        public void MoveToLead(ChainFollower caller, SplineNode node)
         {
             ChainFollower link = _links.Find(x => x != caller);
             if (link != null)
             {
                 SplineNode temp = currentNode;
                 MoveToNode(node);
-                link.MoveChain(this, temp);
+                link.MoveToLead(this, temp);
             }
             else
                 MoveToNode(node);
         }
 
-        public void MoveLead(SplineNode node)
+        public void MoveLead(SplineNode node, Action onEnd = null)
         {
             if (node)
             {
                 SplineNode temp = currentNode;
-                MoveToNode(node);
-                _links[0].MoveChain(this, temp);
-
+                MoveToNode(node, onEnd);
+                _links[0].MoveToLead(this, temp);
             }
         }
 
+
         public void MoveLead(Vector2 dir)
         {
-            var next = FindNextNode(dir, GetLastNode());
+            var next = NodeSeeker.FindNextNode(dir, GetLastNode());
             if (next)
             {
              //   _links[0].MoveChain(this, currentNode);
@@ -178,10 +177,10 @@ namespace PuzzleGame
                 if (n.IsOccupied == false)
                     res = n;
             }
-            if (res == null)
-                Debug.Log("didn't find next node. Current: " + currentNode.gameObject.name);
-            else
-                Debug.Log("Found next: " + res.gameObject.name);
+            //if (res == null)
+            //    Debug.Log("didn't find next node. Current: " + currentNode.gameObject.name);
+            //else
+            //    Debug.Log("Found next: " + res.gameObject.name);
             return res;
         }
 

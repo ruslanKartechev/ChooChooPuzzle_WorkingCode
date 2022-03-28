@@ -24,6 +24,8 @@ namespace PuzzleGame
             currentPercent = 0;
             start = _start;
             end = _end;
+            if(start == null) { Debug.Log("Start node is null"); return; }
+            if(end == null) { Debug.Log("End node is null");return; }
             _direction = (end.transform.position - start.transform.position).normalized;
             _distance = (end.transform.position - start.transform.position).magnitude;
         }
