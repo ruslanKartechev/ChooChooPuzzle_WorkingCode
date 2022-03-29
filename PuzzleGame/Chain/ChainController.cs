@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-
+using CommonGame;
 namespace PuzzleGame
 {
 
-    public class ChainController : MonoBehaviour,IChainMovable
+    public class ChainController : MonoBehaviour, IChainMovable
     {
         public FollowerSettings _CommonSettings;
         [Header("Pivot Followers")]
@@ -39,13 +39,12 @@ namespace PuzzleGame
             {
                 f.Init(this, _CommonSettings);
             }
+            InitSegments();
+
             if (tester == null) Debug.Log("no tester");
 
-            if (SnapOnStart)
-            {
-                SetNodes();
-               
-            }
+            SetNodes();
+            SetChainPositions();
 
             end_1 = _Followers[0];
             end_2 = _Followers[_Followers.Count - 1];
@@ -59,60 +58,20 @@ namespace PuzzleGame
         }
 
 
-        #region FromEditor
-        public void GetFollowers()
+        private void InitSegments()
         {
-            for(int i =0;i<transform.childCount; i++)
-            {
-                ChainFollower follower = transform.GetChild(i).gameObject.GetComponent<ChainFollower>();
-                if(follower != null && _Followers.Contains(follower) == false)
-                {
-                    _Followers.Add(follower);
-                }
-            }
-        }
-
-        public void SetNodes()
-        {
-            if (_Nodes.Count != _Followers.Count)
-            {
-                Debug.Log("<color=red>" + "Nodes count doesn't match follwers count" + "</color>");
-                return;
-            }
-            for (int i=0; i<_Followers.Count; i++)
-            {
-                if(_Nodes[i] == null) { Debug.Log("node is null"); return; }
-                _Followers[i].SetCurrentNode(_Nodes[i],true);
-                
-            }
-        }
-
-        public void GetChainSegments()
-        {
-            _ChainSegments = new List<ChainSegmentManager>();
-            for (int i=0; i< transform.parent.childCount; i++)
-            {
-                ChainSegmentManager temp = transform.parent.GetChild(i).GetComponent<ChainSegmentManager>();
-                if(temp != null && _ChainSegments.Contains(temp) == false)
-                {
-                    _ChainSegments.Add(temp);
-                }
-            }
-        }
-
-        public void SetChainPositions()
-        {
-
             foreach(ChainSegmentManager segment in _ChainSegments)
             {
-                if (segment != null)
-                    segment.SetPositions();
+                if (segment != null) segment.InitSegment(this);
             }
-
-
-
         }
-        #endregion
+
+
+
+        public virtual void OnMoveMade()
+        {
+            GameManager.Instance._events.MoveMade.Invoke();
+        }
 
 
         public void OnClick(ChainFollower follower)
@@ -128,17 +87,10 @@ namespace PuzzleGame
             leadingFollower = null;
             StopMovingChain();
         }
-        public void MoveChainFollowers(Vector2 input)
-        {
-            if(leadingFollower != null)
-                leadingFollower.MoveLead(input);
-        }
         public void MoveChain(SplineNode testerNode)
         {
             if (leadingFollower != null)
                 leadingFollower.MoveLead(testerNode);
-            else
-                Debug.Log("null leading");
         }
         public void MoveTesterBy(Vector2 input)
         {
@@ -150,9 +102,15 @@ namespace PuzzleGame
             return GetOtherEnd().currentNode;
         }
 
+        public void Cut(ChainSegmentManager segment, ChainLink link)
+        {
+            Debug.Log("got cut");
+
+        }
+
         public ChainFollower GetOtherEnd()
         {
-            if (leadingFollower == null) { Debug.Log("no leading yet"); return end_1; }
+            if (leadingFollower == null) { Debug.Log("No Leading Follower"); return end_1; }
             if (leadingFollower == end_1)
             {
                 leadingFollower = end_2;
@@ -201,25 +159,18 @@ namespace PuzzleGame
                         lead = end_2;
                 }
             }
-            if (lead != leadingFollower && leadingFollower != null)
-                StopChainFollowers();
             leadingFollower = lead;
             SplineNode node = lead.GetLastNode();
             return node;
         }
-
-        private void StopChainFollowers()
-        {
-            foreach (ChainFollower f in _Followers)
-                f.StopMovingToNode();
-        }
-
-        public void SetChainFollowers()
+        public void ConnectChainFollowers()
         {
             if (_Followers.Count < 3) {Debug.Log("Min amount of links is 3"); return; }
+            _Followers[0].ResetLinks();
             _Followers[0].AddLink(_Followers[1]);
             for(int i = 1; i< _Followers.Count; i++)
             {
+                _Followers[i].ResetLinks();
                 _Followers[i].AddLink(_Followers[i-1]);
                 if (i < _Followers.Count - 1)
                     _Followers[i].AddLink(_Followers[i + 1]);
@@ -258,6 +209,69 @@ namespace PuzzleGame
             return info;
         }
 
+
+
+
+
+
+        #region FromEditor
+        public void GetFollowers()
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                ChainFollower follower = transform.GetChild(i).gameObject.GetComponent<ChainFollower>();
+                if (follower != null && _Followers.Contains(follower) == false)
+                {
+                    _Followers.Add(follower);
+                }
+            }
+        }
+
+        public void SetNodes()
+        {
+            if (_Nodes.Count != _Followers.Count)
+            {
+                Debug.Log("<color=red>" + "Nodes count doesn't match follwers count" + "</color>");
+                return;
+            }
+            for (int i = 0; i < _Followers.Count; i++)
+            {
+                if (_Nodes[i] == null) { Debug.Log("node is null"); return; }
+                _Followers[i].SetCurrentNode(_Nodes[i], true);
+
+            }
+        }
+
+        public void GetChainSegments()
+        {
+            _ChainSegments = new List<ChainSegmentManager>();
+            for (int i = 0; i < transform.parent.childCount; i++)
+            {
+                ChainSegmentManager temp = transform.parent.GetChild(i).GetComponent<ChainSegmentManager>();
+                if (temp != null && _ChainSegments.Contains(temp) == false)
+                {
+                    _ChainSegments.Add(temp);
+                }
+            }
+        }
+
+        public void SetChainPositions()
+        {
+
+            foreach (ChainSegmentManager segment in _ChainSegments)
+            {
+                if (segment != null)
+                    segment.SetPositions();
+            }
+
+
+
+        }
+        #endregion
+
+
+
+
     }
 
     [CustomEditor(typeof(ChainController))]
@@ -271,7 +285,7 @@ namespace PuzzleGame
             if (GUILayout.Button("GetFollowers"))
                 me.GetFollowers();
             if (GUILayout.Button("SetChain"))
-                me.SetChainFollowers();
+                me.ConnectChainFollowers();
             GUILayout.EndHorizontal();
             if (GUILayout.Button("SetNodes"))
                 me.SetNodes();

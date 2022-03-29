@@ -65,11 +65,10 @@ namespace PuzzleGame
             OccupyNode();
         }
 
-        protected void ResetCurrentNode(SplineNode node)
+        protected virtual void ResetCurrentNode(SplineNode node)
         {
             currentNode = node;
             OccupyNode();
-            // score keeping logic
         }
 
 
@@ -192,21 +191,6 @@ namespace PuzzleGame
         protected SplineNode nextNode = null;
         protected Coroutine movingAlongNodes;
         protected float listMoveTime = 0.2f;
-        public virtual void MoveByDir(Vector2 input)
-        {
-            //SetSegment(input);
-            SplineNode res = NodeSeeker.FindNextNode(input, GetLastNode());
-            if (res == null) { Debug.Log("Next node not found"); return; }
-            //if (moveList.Contains(res) == false)
-            //    moveList.Add(res);
-            //if (movingAlongNodes == null)
-            //{
-            //    StartCoroutine(MovingAlongNodes());
-            //}
-
-            currentSegment = null;
-        }
-
         public virtual void MoveToNode(SplineNode node, Action onEnd = null)
         {
             if (node == null) { Debug.Log("Null node passed"); return; }
@@ -223,26 +207,6 @@ namespace PuzzleGame
             nodeSnapping = StartCoroutine(SnappingToNode(node.transform, listMoveTime, onEnd));
 
         }
-        public virtual void StopMovingToNode()
-        {
-            //if (nodeSnapping != null) StopCoroutine(nodeSnapping);
-            //if (nextNode != null)
-            //{
-            //    Debug.Log("next not null");
-            //}
-        }
-        //protected virtual IEnumerator MovingAlongNodes()
-        //{
-        //    while (moveList.Count > 0)
-        //    {
-        //        CustomSplineNode next = moveList[0];
-
-        //        yield return SnappingToNode(next.transform, listMoveTime);
-        //        currentNode = next;
-        //        moveList.Remove(next);
-        //        yield return null;
-        //    }
-        //}
 
 
 

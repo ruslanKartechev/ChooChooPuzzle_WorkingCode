@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System.Linq;
+using System;
 namespace PuzzleGame
 {
 
@@ -12,9 +12,7 @@ namespace PuzzleGame
         [SerializeField] private AngleConstraint AngleConst;
         public List<SplineNode> linkedNodes;
         private List<IConstrained> mConstraints = new List<IConstrained>();
-
-
-
+        public NodeType _type = NodeType.Default;
         public Vector3 _position { get { return transform.position; } }
         public bool IsOccupied
         {
@@ -29,6 +27,7 @@ namespace PuzzleGame
         public ISplineFollower currentFollower { get; set; }
         public List<IConstrained> _Constraints { get { return mConstraints; } }
 
+        public Action OnPlaced;
 
         private void Start()
         {
@@ -80,7 +79,7 @@ namespace PuzzleGame
         }
         public void SetCurrentFollowerForce(ISplineFollower follower) => currentFollower = follower;
 
-        public void ReleaseNode()
+        public virtual void ReleaseNode()
         {
             currentFollower = null;
         }

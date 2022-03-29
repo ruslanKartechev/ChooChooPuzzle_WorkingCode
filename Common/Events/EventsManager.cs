@@ -31,6 +31,8 @@ namespace CommonGame.Events
         public UnityEvent NextLevelCalled = new UnityEvent();
 
         public UnityEvent Impact = new UnityEvent();
-        
+
+
+        public UnityEvent MoveMade = new UnityEvent();
     }
 }

@@ -37,32 +37,41 @@ namespace PuzzleGame
                 SetNodeNeighbours();
         }
 
-        public void AddPoint()
+        public void AddNode()
         {
+            CleanList();
             if (addType == AddType.first)
                 AddToFirst();
             else if (addType == AddType.last)
                 AddToLast();
+
+        }
+        private void CleanList()
+        {
+            _transforms.RemoveAll(t => t == null);
         }
         private void AddToLast()
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
-            n.name = gameObject.name + " " + _transforms.Count.ToString();
             n.parent = gameObject.transform;
             n.parent.localScale = Vector3.one * DrawSphereSize;
             if (_transforms.Count == 0)
             {
+                ReName();
                 _transforms.Add(n);
                 return;
             }
             Transform prev = _transforms[_transforms.Count - 1];
-            n.position = prev.position + prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
+            if(prev == null) 
+                { _transforms.Remove(prev); }
+            else
+                n.position = prev.position + prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Add(n);
+            ReName();
         }
         private void AddToFirst()
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
-            n.name = gameObject.name +  " 0";
             ReName();
             n.parent = gameObject.transform;
             n.parent.localScale = Vector3.one * DrawSphereSize;
@@ -70,17 +79,25 @@ namespace PuzzleGame
             if (_transforms.Count == 0)
             {
                 _transforms.Add(n);
+                ReName();
                 return;
             }
             Transform prev = _transforms[0];
-            n.position = prev.position - prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
+            if(prev == null) { _transforms.Remove(prev); }
+            else
+                n.position = prev.position - prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Insert(0,n);
+            ReName();
         }
         public void ReName()
         {
             if (_transforms.Count == 0) return;
             for (int i = 0; i < _transforms.Count; i++)
-                _transforms[i].name = "Node + " + (i + 1).ToString();
+            {
+                if(_transforms[i]!=null)
+                    _transforms[i].name = "Node + " + (i + 1).ToString();
+
+            }
         }
 
         public void SpaceFromLast()
@@ -238,7 +255,7 @@ namespace PuzzleGame
 
             GUILayout.Space(10);
             if (GUILayout.Button("AddPoint"))
-                me.AddPoint();
+                me.AddNode();
             if (GUILayout.Button("SetZeroDepth"))
                 me.SetDepth();
             

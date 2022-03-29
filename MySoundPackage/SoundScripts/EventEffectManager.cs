@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using BomberGame.Data;
 
 namespace CommonGame.Sound {
     public class EventEffectManager : MonoBehaviour

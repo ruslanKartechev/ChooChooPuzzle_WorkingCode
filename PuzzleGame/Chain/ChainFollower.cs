@@ -38,6 +38,10 @@ namespace PuzzleGame
             InitSettings(settings);
         }
 
+        public void ResetLinks()
+        {
+            _links = new List<ChainFollower>();
+        }
         public void AddLink(ChainFollower link)
         {
             if (_links.Contains(link) == false)

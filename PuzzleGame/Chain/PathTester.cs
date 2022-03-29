@@ -78,7 +78,7 @@ namespace PuzzleGame
             {
                 FindNewLead(input);
             }
-            currentNode = _Controller.leadingFollower.currentNode;
+            //currentNode = _Controller.leadingFollower.currentNode;
 
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
@@ -104,9 +104,23 @@ namespace PuzzleGame
         }
         protected void FindNewLead(Vector2 input)
         {
-            SplineNode node = _Controller.GetLeadingFollower(input);
-            currentNode = node;
-            transform.position = currentNode._position;
+            if(_Controller.leadingFollower == null)
+            {
+                SplineNode node = _Controller.GetLeadingFollower(input);
+                currentNode = node;
+                transform.position = currentNode._position;
+            }
+            else
+            {
+                SplineNode old = _Controller.leadingFollower.currentNode;
+                SplineNode node = _Controller.GetLeadingFollower(input);
+                if (old != node)
+                {
+                    currentNode = node;
+                   // transform.position = currentNode._position;
+                }
+            }
+  
         }
 
         protected bool IsChainOccupied(SplineNode node)
@@ -169,11 +183,15 @@ namespace PuzzleGame
                 return;
             }
             _Controller.MoveChain(currentSegment.end);
-            transform.position = currentSegment.end._position;
+            //transform.position = currentSegment.end._position;
             ResetCurrentNode(currentSegment.end);
             onMove = SetSegment;
         }
 
-
+        protected override void ResetCurrentNode(SplineNode node)
+        {
+            base.ResetCurrentNode(node);
+            _Controller.OnMoveMade();
+        }
     }
 }

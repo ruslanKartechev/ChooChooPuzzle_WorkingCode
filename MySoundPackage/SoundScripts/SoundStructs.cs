@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace CommonGame.Sound
 {
+    public enum SoundNames
+    {
+
+    }
+
+
     public struct SourceByName
     {
         public const string MusicSource = "Music";
