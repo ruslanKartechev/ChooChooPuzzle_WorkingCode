@@ -24,7 +24,10 @@ namespace PuzzleGame
         {
             _components = components;
         }
-
+        public void InitOnCutReciver(Action<ChainLink> onCut)
+        {
+            OnCutCall = onCut;
+        }
         public void InitCuttable()
         {
             if (_components == null || _components._model == null)
@@ -35,14 +38,17 @@ namespace PuzzleGame
         }
         public void OnCutDetected()
         {
-            OnCutCall.Invoke(this);
+            OnCutCall?.Invoke(this);
         }
-        public void BreakLink()
+
+        public void Drop()
         {
             _components._rb.isKinematic = false;
-            _components._rb.constraints = RigidbodyConstraints.None;
+            _components._rb.useGravity = true;
             _components._coll.isTrigger = false;
-            Destroy(this);
+            _components._rb.AddForce(UnityEngine.Random.onUnitSphere * 15, ForceMode.Impulse);
+            detector.Deactivate();
+
         }
 
     }

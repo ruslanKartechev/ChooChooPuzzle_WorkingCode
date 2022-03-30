@@ -14,6 +14,10 @@ namespace PuzzleGame
         { 
             
         }
+        public virtual void Deactivate()
+        {
+            onCut = null;
+        }
     }
 
     public class ChainLinkCollisionDetector: CuttableDetector
@@ -23,6 +27,7 @@ namespace PuzzleGame
             if(onCut == null) { Debug.Log("Cut Action not assigned");return; }
             onCut?.Invoke();
         }
+        
 
     }
 }

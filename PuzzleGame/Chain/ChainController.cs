@@ -39,6 +39,7 @@ namespace PuzzleGame
             {
                 f.Init(this, _CommonSettings);
             }
+            _ChainSegments.TrimExcess();
             InitSegments();
 
             if (tester == null) Debug.Log("no tester");
@@ -56,6 +57,10 @@ namespace PuzzleGame
             _ConstraintHandler = new ChainConstaintHandler();
             _ConstraintHandler.chain = this;
         }
+
+
+
+
 
 
         private void InitSegments()
@@ -102,10 +107,25 @@ namespace PuzzleGame
             return GetOtherEnd().currentNode;
         }
 
-        public void Cut(ChainSegmentManager segment, ChainLink link)
+        public void Cut(ChainSegmentManager segmentCaller, int linkIndex)
         {
-            Debug.Log("got cut");
-
+            SegmentIndecesCalculator calculator = new SegmentIndecesCalculator();
+            ChainCutter cutter = new ChainCutter();
+            ChainCutResult res =  cutter.Cut(calculator.ConvertAll(_ChainSegments), 
+                calculator.Convert(_ChainSegments, segmentCaller), 
+                linkIndex);
+            segmentCaller.DropLinks(res.LinksToCut);
+            if(res.SegmentsAway != null)
+            {
+                foreach (int i in res.SegmentsAway)
+                {
+                    if (_ChainSegments[i] != null)
+                        _ChainSegments[i].DropAllLinks();
+                    _ChainSegments[i] = null;
+                }
+                _ChainSegments.RemoveAll(x => x = null);
+            }
+   
         }
 
         public ChainFollower GetOtherEnd()
