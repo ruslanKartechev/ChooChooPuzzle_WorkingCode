@@ -9,8 +9,11 @@ namespace PuzzleGame
 
     public class ChainController : MonoBehaviour, IChainMovable
     {
-        public FollowerSettings _CommonSettings;
+        public ChainSettings settings;
+        [Space(10)]
+        public ChainNumber _Number;
         [Header("Pivot Followers")]
+        [Space(10)]
         public List<ChainFollower> _Followers = new List<ChainFollower>();
 
         [Header("Start nodes")]
@@ -20,25 +23,36 @@ namespace PuzzleGame
         [Space(10)]
         public PathTester tester;
 
-        [HideInInspector] public ChainFollower end_1;
-        [HideInInspector] public ChainFollower end_2;
-        [HideInInspector] public ChainFollower leadingFollower;
+        private ChainFollower end_1;
+        private ChainFollower end_2;
+        public ChainFollower leadingFollower;
 
-        [Header("SnapOnStart")]
-        [Space(10)]
-        public bool SnapOnStart = true;
-
-
-        [HideInInspector] public ChainPositionInfo mPosInfo;
         public ChainConstaintHandler _ConstraintHandler;
+        public ChainEffectsController _Effects;
 
+        public Action OnCurrentMoveEnd;
+
+        private Action<ChainFollower> _OnFollowerClick;
+        private Action _OnFollowerRelease;
+        private Action<Vector2> _OnFollowerInput;
+
+        public Action<ChainFollower> OnFollowerClick { get { return _OnFollowerClick; } }
+        public Action OnFollowerRelease { get { return _OnFollowerRelease; } }
+        public Action<Vector2> OnFollowerInput { get { return _OnFollowerInput; } }
 
         private void Start()
         {
-            foreach(ChainFollower f in _Followers)
+            InitChain();
+            
+        }
+
+        private void InitChain()
+        {
+            foreach (ChainFollower f in _Followers)
             {
-                f.Init(this, _CommonSettings);
+                f.Init(this, settings.followerSettings);
             }
+            GetChainSegments();
             _ChainSegments.TrimExcess();
             InitSegments();
 
@@ -49,19 +63,48 @@ namespace PuzzleGame
 
             end_1 = _Followers[0];
             end_2 = _Followers[_Followers.Count - 1];
-            
+
             tester.SnapTo(_Nodes[_Nodes.Count - 1]);
-            tester.Init(this, _CommonSettings);
+            tester.Init(this, settings.followerSettings);
             tester.HideForced();
 
             _ConstraintHandler = new ChainConstaintHandler();
             _ConstraintHandler.chain = this;
+
+            _Effects = new ChainEffectsController(settings.ChainEffects, _ChainSegments);
+
+            GameManager.Instance._events.LevelStarted.AddListener(OnLevelStart);
+            GameManager.Instance._events.LevelFinished.AddListener(OnLevelEnd);
+            // Debug mode
+            InitFollowerActions();
+            
         }
 
+        private void OnLevelStart()
+        {
+            InitFollowerActions();
+        }
 
+        private void OnLevelEnd()
+        {
+            GameManager.Instance._events.LevelStarted.RemoveListener(OnLevelStart);
+            GameManager.Instance._events.LevelFinished.RemoveListener(OnLevelEnd);
+            InitFollowerActions(true);
+        }
 
-
-
+        public void InitFollowerActions(bool setNull = false)
+        {
+            if (setNull)
+            {
+                _OnFollowerClick = null;
+                _OnFollowerRelease = null;
+                _OnFollowerInput = null;
+                return;
+            }
+            _OnFollowerClick = OnClick;
+            _OnFollowerRelease = OnRelease;
+            _OnFollowerInput = MoveByInput;
+        }
 
         private void InitSegments()
         {
@@ -71,41 +114,40 @@ namespace PuzzleGame
             }
         }
 
-
-
         public virtual void OnMoveMade()
         {
             GameManager.Instance._events.MoveMade.Invoke();
         }
-
 
         public void OnClick(ChainFollower follower)
         {
             tester.SnapTo(follower.currentNode);
             tester.HideForced();
             StartMovingChain();
+            _Effects?.ExecuteEffect(ChainEffects.Start);
         }
+
         public void OnRelease()
         {
             tester.Hide();
             tester.OnMoveEnd();
             leadingFollower = null;
             StopMovingChain();
+            _Effects?.ExecuteEffect(ChainEffects.Stop);
         }
-        public void MoveChain(SplineNode testerNode)
-        {
-            if (leadingFollower != null)
-                leadingFollower.MoveLead(testerNode);
-        }
-        public void MoveTesterBy(Vector2 input)
+        public void MoveByInput(Vector2 input)
         {
             tester.TakeInput(input);
         }
-        
-        public SplineNode GetOtherEndNode()
+
+        public void MoveChain(SplineNode testerNode)
         {
-            return GetOtherEnd().currentNode;
+            if (leadingFollower != null)
+                leadingFollower.MoveLead(testerNode, OnMoveEnd);
         }
+
+  
+
 
         public void Cut(ChainSegmentManager segmentCaller, int linkIndex)
         {
@@ -125,7 +167,6 @@ namespace PuzzleGame
                 }
                 _ChainSegments.RemoveAll(x => x = null);
             }
-   
         }
 
         public ChainFollower GetOtherEnd()
@@ -183,21 +224,6 @@ namespace PuzzleGame
             SplineNode node = lead.GetLastNode();
             return node;
         }
-        public void ConnectChainFollowers()
-        {
-            if (_Followers.Count < 3) {Debug.Log("Min amount of links is 3"); return; }
-            _Followers[0].ResetLinks();
-            _Followers[0].AddLink(_Followers[1]);
-            for(int i = 1; i< _Followers.Count; i++)
-            {
-                _Followers[i].ResetLinks();
-                _Followers[i].AddLink(_Followers[i-1]);
-                if (i < _Followers.Count - 1)
-                    _Followers[i].AddLink(_Followers[i + 1]);
-            }
-        }
-
-
         
         public void StartMovingChain()
         {
@@ -217,11 +243,11 @@ namespace PuzzleGame
             }
         }
 
-
         public ChainPositionInfo GetChainPosition()
         {
             ChainPositionInfo info = new ChainPositionInfo();
             info.leadingNode = leadingFollower.GetLastNode();
+            info.testerPosition = tester.currentNode;
             List<SplineNode> positions = new List<SplineNode>(_Followers.Count);
             foreach (ChainFollower f in _Followers)
                 positions.Add(f.GetLastNode());
@@ -230,11 +256,74 @@ namespace PuzzleGame
         }
 
 
+        #region NodeTypesHandler
+        public void CheckNodeType(SplineNode node)
+        {
+            switch (node.Type)
+            {
+                case NodeType.Default:
+                    Debug.Log("Default node");
+                    break;
+                case NodeType.Finish:
+                    HandleFinishNode(node);
+                    break;
+            }
+        }
 
+        public void HandleFinishNode(SplineNode node)
+        {
+            FinishNode finish = (FinishNode)node;
+            if (finish == null) return;
+            if (finish.CompareNumbers(_Number))
+            {
+                Debug.Log("<color=green> Correct Finish </color>");
+                OnRelease();
+                InitFollowerActions(true);
+            }
+            else
+                Debug.Log("<color=red> Wrong finish </color>");
+        }
+        #endregion
+
+
+
+        #region OnMovementEnd
+        public void OnMoveEnd()
+        {
+            if(leadingFollower != null)
+                CheckNodeType(leadingFollower.currentNode);
+            OnCurrentMoveEnd?.Invoke();
+            OnCurrentMoveEnd = null;
+        }
+
+        public void BlockNextMovement()
+        {
+            OnCurrentMoveEnd = OnMovementBlocked;
+        }
+ 
+        private void OnMovementBlocked()
+        {
+            OnRelease();
+            _Effects.ExecuteEffect(ChainEffects.Shake);
+        }
+        #endregion
 
 
 
         #region FromEditor
+        public void ConnectChainFollowers()
+        {
+            if (_Followers.Count < 3) { Debug.Log("Min amount of links is 3"); return; }
+            _Followers[0].ResetLinks();
+            _Followers[0].AddLink(_Followers[1]);
+            for (int i = 1; i < _Followers.Count; i++)
+            {
+                _Followers[i].ResetLinks();
+                _Followers[i].AddLink(_Followers[i - 1]);
+                if (i < _Followers.Count - 1)
+                    _Followers[i].AddLink(_Followers[i + 1]);
+            }
+        }
         public void GetFollowers()
         {
             for (int i = 0; i < transform.childCount; i++)
@@ -289,33 +378,7 @@ namespace PuzzleGame
         }
         #endregion
 
-
-
-
     }
 
-    [CustomEditor(typeof(ChainController))]
-    public class ChainFollowerControllerEditor: Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-            ChainController me = target as ChainController;
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("GetFollowers"))
-                me.GetFollowers();
-            if (GUILayout.Button("SetChain"))
-                me.ConnectChainFollowers();
-            GUILayout.EndHorizontal();
-            if (GUILayout.Button("SetNodes"))
-                me.SetNodes();
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("GetSegments"))
-                me.GetChainSegments();
-            if (GUILayout.Button("SetChainPositions"))
-                me.SetChainPositions();
-            GUILayout.EndHorizontal();
-        }
-    }
+  
 }

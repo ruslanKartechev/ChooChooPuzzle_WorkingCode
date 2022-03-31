@@ -24,7 +24,8 @@ namespace PuzzleGame
             Debug.DrawRay(data.chainPositions.chainNodes[preLead]._position, inner, Color.blue, 2f);
             Debug.DrawRay(data.chainPositions.chainNodes[lead]._position, outer, Color.blue, 2f);
             float angle = GetAngle(inner, outer, Vector3.forward);
-            if (angle < 90 && angle != 0)
+            //  if (angle < minAngle && angle != 0)
+            if (angle < minAngle || angle >maxAngle)
                 res.Allowed = false;
             else
                 res.Allowed = true;

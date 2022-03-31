@@ -6,13 +6,19 @@ namespace PuzzleGame
 {
     public static class NodeSeeker
     {
-        public static SplineNode FindNextNode(Vector2 input, SplineNode from, List<SplineNode> nodes = null)
+        public static SplineNode FindNextNode(Vector2 input, SplineNode from, List<SplineNode> nodes = null, bool chooseFirst=true)
         {
             if (nodes == null)
                 nodes = from.linkedNodes;
 
-            if (nodes.Count == 1)
-                return nodes[0];
+            if (nodes.Count == 1 && chooseFirst == true)
+            {
+                if (nodes[0] != from)
+                    return nodes[0];
+                else
+                    return null;
+            } 
+               
 
             if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
             {

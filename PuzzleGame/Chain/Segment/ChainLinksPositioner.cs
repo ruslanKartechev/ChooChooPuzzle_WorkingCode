@@ -11,8 +11,11 @@ namespace PuzzleGame
         private Coroutine movingHandler;
         [SerializeField] private bool LookAtDirection = true;
 
-        public void StartMovement(ChainLinksInfo info, Transform end_1, Transform end_2)
+        private bool IsPaused = false;
+
+        public void StartMovement(ChainSegmentInfo info, Transform end_1, Transform end_2)
         {
+            IsPaused = false;
             StopMovement();
             if(gameObject.activeInHierarchy)
             StartCoroutine(MovingChain(info, end_1, end_2));
@@ -25,8 +28,16 @@ namespace PuzzleGame
                 StopCoroutine(movingHandler);
         }
 
+        public void PauseMovement()
+        {
+            IsPaused = true;
+        }
+        public void ResumeMovement()
+        {
+            IsPaused = false;
+        }
 
-        public void SetPositionsForced(ChainLinksInfo info, Transform end_1, Transform end_2)
+        public void SetPositionsForced(ChainSegmentInfo info, Transform end_1, Transform end_2)
         {
             List<Vector3> positions = GetPositions(end_1.position, end_2.position, info._links.Count);
             Vector3 dir = (end_2.position - end_1.position).normalized;
@@ -37,12 +48,12 @@ namespace PuzzleGame
                     info._links[i].transform.rotation = Quaternion.LookRotation(dir);
             }
         }
-
-        private IEnumerator MovingChain(ChainLinksInfo info, Transform end_1, Transform end_2)
+        private IEnumerator MovingChain(ChainSegmentInfo info, Transform end_1, Transform end_2)
         {
             while (true)
             {
-                SetPositionsForced(info, end_1, end_2);
+                if (IsPaused == false)
+                    SetPositionsForced(info, end_1, end_2);
                 yield return null;
             }
         }
@@ -50,12 +61,21 @@ namespace PuzzleGame
         private List<Vector3>  GetPositions(Vector3 start, Vector3 end, int count)
         {
             List<Vector3> positions = new List<Vector3>(count);
-            for(int i =0; i < count; i++)
+            if(count == 1)
             {
-                Vector3 pos = Vector3.Lerp(start, end, (float)i/(count));
-                positions.Add(pos);
-
+                positions.Add(Vector3.Lerp(start, end, 0.5f));
             }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    float percent = (float)i / count;
+                    percent = Mathf.Clamp(percent,0.2f, 0.8f);
+                    Vector3 pos = Vector3.Lerp(start, end, percent);
+                    positions.Add(pos);
+                }
+            }
+
             return positions;
         }
 

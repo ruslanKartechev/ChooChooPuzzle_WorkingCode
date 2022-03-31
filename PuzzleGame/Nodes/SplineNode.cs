@@ -8,12 +8,18 @@ namespace PuzzleGame
 
     public class SplineNode : MonoBehaviour
     {
+        [SerializeField] protected ChainNumber _number;
+        [SerializeField] protected NodeType _type;
+        public NodeType Type { get { return _type; } }
+        public ChainNumber Number { get { return _number; } }
+
+
         [SerializeField] private bool HasAngleConstr;
         [SerializeField] private AngleConstraint AngleConst;
         public List<SplineNode> linkedNodes;
         private List<IConstrained> mConstraints = new List<IConstrained>();
-        public NodeType _type = NodeType.Default;
         public Vector3 _position { get { return transform.position; } }
+        protected Action OnOccupied;
         public bool IsOccupied
         {
             get
@@ -27,9 +33,12 @@ namespace PuzzleGame
         public ISplineFollower currentFollower { get; set; }
         public List<IConstrained> _Constraints { get { return mConstraints; } }
 
-        public Action OnPlaced;
 
         private void Start()
+        {
+            InitConstraints();
+        }
+        protected void InitConstraints()
         {
             AddBaseConstr();
             if (HasAngleConstr)
@@ -48,8 +57,6 @@ namespace PuzzleGame
         }
 
         #endregion
-
-
 
 
         public void ConnectNode(SplineNode node)
@@ -72,6 +79,7 @@ namespace PuzzleGame
         {
             if(currentFollower == null)
             {
+                OnOccupied?.Invoke();
                 currentFollower = follower;
                 return true;
             }
@@ -83,12 +91,6 @@ namespace PuzzleGame
         {
             currentFollower = null;
         }
-
-
-
-
-
-
     }
 
 

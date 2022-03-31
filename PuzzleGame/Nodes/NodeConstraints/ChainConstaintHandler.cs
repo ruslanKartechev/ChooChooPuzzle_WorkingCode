@@ -13,6 +13,7 @@ namespace PuzzleGame
             ConstraintData data = new ConstraintData();
             data.ScreenDirection = input;
             data.chainPositions = chain.GetChainPosition();
+            
             return CheckConstraint(constraints,data);
         }
         public ConstraintResult CheckConstraint(List<IConstrained> constraints, ConstraintData data)

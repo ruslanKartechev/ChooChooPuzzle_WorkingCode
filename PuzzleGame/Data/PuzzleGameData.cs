@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 namespace PuzzleGame
 {
-    public interface ISplineFollower
+    public struct GONames
     {
-
-        Transform GetTransform();
-        bool PushFromNode(Vector2 dir);
+        public const string FinishNode = "FinishNode";
     }
 }

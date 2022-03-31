@@ -10,7 +10,7 @@ namespace PuzzleGame
         public float Scale = 1f;
         public Vector3 EulerAngles;
         private List<Transform> models = new List<Transform>();
-
+        public bool UseSingleModel = false;
         public void GetAllModels()
         {
             models = new List<Transform>();

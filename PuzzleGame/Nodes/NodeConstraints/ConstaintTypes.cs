@@ -8,6 +8,7 @@ namespace PuzzleGame
     {
         public List<SplineNode> chainNodes;
         public SplineNode leadingNode;
+        public SplineNode testerPosition;
     }
 
     public class ConstraintData

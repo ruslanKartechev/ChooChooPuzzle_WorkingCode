@@ -43,13 +43,13 @@ namespace PuzzleGame
         {
             if (IsVilisble)
             {
-                model.SetActive(false);
+                //model.SetActive(false);
                 IsVilisble = false;
             }
         }
         public void HideForced()
         {
-            model.SetActive(false);
+           // model.SetActive(false);
             IsVilisble = false;
         }
         public void SnapTo(SplineNode node)
@@ -70,38 +70,39 @@ namespace PuzzleGame
             onMove = SetSegment;
             
         }
-
-
         protected override bool SetSegment(Vector2 input)
         {
             if (_Controller.leadingFollower == null)
             {
                 FindNewLead(input);
             }
-            //currentNode = _Controller.leadingFollower.currentNode;
+
+            if (currentSegment != null && currentSegment.end != null)
+                ResetCurrentNode(currentSegment.end);
+         
 
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
             {
-      
+                _Controller.MoveChain(currentNode);
+                _Controller.BlockNextMovement();
                 return false;
             }
-
-            SplineNode temp = NodeSeeker.FindNextNode(input, currentNode, result.Options);
-
-            if (IsChainOccupied(temp))
+            SplineNode nextNode = NodeSeeker.FindNextNode(input, currentNode, result.Options);
+            if (IsChainOccupied(nextNode))
             {
                 FindNewLead(input);
                 return base.SetSegment(input);
             }
             else
             {
-                currentSegment = new Segment(currentNode, temp);
+                currentSegment = new Segment(currentNode, nextNode);
+                _Controller.MoveChain(currentNode);
                 onMove = MoveAlongSegment;
                 return true;
             }
-            //return false;
         }
+
         protected void FindNewLead(Vector2 input)
         {
             if(_Controller.leadingFollower == null)
@@ -117,7 +118,6 @@ namespace PuzzleGame
                 if (old != node)
                 {
                     currentNode = node;
-                   // transform.position = currentNode._position;
                 }
             }
   
@@ -137,7 +137,6 @@ namespace PuzzleGame
 
         protected override bool MoveAlongSegment(Vector2 input)
         {
-            //Debug.Log("moving on segment");
             if (currentSegment == null) return false;
             if (currentSegment.currentPercent >= 5f / 100)
                 Show();
@@ -149,9 +148,10 @@ namespace PuzzleGame
                 percent += _settings.moveSpeed / 100;
 
                 Mathf.Clamp01(percent);
-                if (percent >= 0.9f)
+                if (percent >= 1)
                 {
-                    OnNodeApproach(input);
+                    // OnNodeApproach(input);
+                    onMove = SetSegment;
                     return true;
                 }
             }
@@ -179,11 +179,10 @@ namespace PuzzleGame
             bool allow = currentSegment.end.PushFromNode(input);
             if(allow == false)
             {
-                //Debug.Log("<color=red>NOT Allowed to Push Further</color>");
+                _Controller.BlockNextMovement();
                 return;
             }
             _Controller.MoveChain(currentSegment.end);
-            //transform.position = currentSegment.end._position;
             ResetCurrentNode(currentSegment.end);
             onMove = SetSegment;
         }

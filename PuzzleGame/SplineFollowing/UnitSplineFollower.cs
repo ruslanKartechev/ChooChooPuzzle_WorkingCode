@@ -194,6 +194,7 @@ namespace PuzzleGame
         public virtual void MoveToNode(SplineNode node, Action onEnd = null)
         {
             if (node == null) { Debug.Log("Null node passed"); return; }
+            if (node == currentNode) return;
             if (nodeSnapping != null) StopCoroutine(nodeSnapping);
             if (nextNode != null)
             {
@@ -202,13 +203,10 @@ namespace PuzzleGame
             }
             currentNode.ReleaseNode();
             nextNode = node;
-            currentNode = nextNode;
+            currentNode = node;
             OccupyNode();
-            nodeSnapping = StartCoroutine(SnappingToNode(node.transform, listMoveTime, onEnd));
-
+            nodeSnapping = StartCoroutine(SnappingToNode(nextNode.transform, listMoveTime, onEnd));
         }
-
-
 
         protected virtual IEnumerator SnappingToNode(Transform node, float time, Action onEnd = null)
         {

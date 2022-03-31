@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
 using System;
 namespace PuzzleGame
 {
@@ -61,17 +60,17 @@ namespace PuzzleGame
 
         public override void TakeInput(Vector2 input)
         {
-            _Controller.MoveTesterBy(input);
+            _Controller.OnFollowerInput?.Invoke(input);
         }
 
         public override void OnMoveStart()
         {
-            _Controller.OnClick(this);
+            _Controller.OnFollowerClick?.Invoke(this);
         }
 
         public override void OnMoveEnd()
         {
-            _Controller.OnRelease();
+            _Controller.OnFollowerRelease?.Invoke();
         }
         public bool PushForward()
         {
@@ -92,6 +91,7 @@ namespace PuzzleGame
 
         public void MoveToLead(ChainFollower caller, SplineNode node)
         {
+
             ChainFollower link = _links.Find(x => x != caller);
             if (link != null)
             {
@@ -107,21 +107,10 @@ namespace PuzzleGame
         {
             if (node)
             {
+                if (node == currentNode) return;
                 SplineNode temp = currentNode;
                 MoveToNode(node, onEnd);
                 _links[0].MoveToLead(this, temp);
-            }
-        }
-
-
-        public void MoveLead(Vector2 dir)
-        {
-            var next = NodeSeeker.FindNextNode(dir, GetLastNode());
-            if (next)
-            {
-             //   _links[0].MoveChain(this, currentNode);
-                MoveToNode(next);
-
             }
         }
 
@@ -154,8 +143,6 @@ namespace PuzzleGame
             }
             Vector3 newPos = currentSegment.start.transform.position + currentSegment.Dir * percent;
             currentData = new MoveData(newPos, percent);
-           //transform.position = newPos;
-           //currentSegment.currentPercent = percent;
             return true;
         }
 
@@ -163,9 +150,7 @@ namespace PuzzleGame
         public void SnapToEnd()
         {
             if (currentSegment == null) return;
-            Debug.Log("snapping to: " + currentSegment.end);
             ResetCurrentNode(currentSegment.end);
-           // transform.position = currentNode._position;
             currentSegment = null;
             onMove = SetSegment;
 
@@ -177,28 +162,15 @@ namespace PuzzleGame
             SplineNode res = null;
             foreach(SplineNode n in currentNode.linkedNodes)
             {
-                // more contrainted logic here
                 if (n.IsOccupied == false)
                     res = n;
             }
-            //if (res == null)
-            //    Debug.Log("didn't find next node. Current: " + currentNode.gameObject.name);
-            //else
-            //    Debug.Log("Found next: " + res.gameObject.name);
             return res;
         }
 
 
+
+
     }
 
-    [CustomEditor(typeof(ChainFollower))]
-    public class SplineChainFollowerEditor : Editor
-    {
-
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-            ChainFollower me = target as ChainFollower;
-        }
-    }
 }

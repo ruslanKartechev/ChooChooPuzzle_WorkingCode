@@ -21,7 +21,7 @@ namespace PuzzleGame
         private void OnMoveMade()
         {
             TotalMoves++;
-            Debug.Log("<color=blue>Total Moves: " + TotalMoves + "</color>");
+            //Debug.Log("<color=blue>Total Moves: " + TotalMoves + "</color>");
         }
 
 

@@ -4,7 +4,7 @@ namespace PuzzleGame
 {
     public interface IChain
     {
-        ChainLinksInfo GetChainLinks();
+        ChainSegmentInfo GetChainLinks();
     }
 
 }

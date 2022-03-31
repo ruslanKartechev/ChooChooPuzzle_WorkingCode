@@ -1,19 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System;
+﻿using System;
 using UnityEngine;
 
 
 namespace PuzzleGame
 {
 
-
-
     public class ChainLink : MonoBehaviour, IChainLink
     {
         [SerializeField] private ChainLinkComponents _components;
         private ChainLinkCollisionDetector detector;
         public Action<ChainLink> OnCutCall;
+        public ChainLinkComponents Components { get { return _components; } }
 
         private void Start()
         {
@@ -46,7 +43,7 @@ namespace PuzzleGame
             _components._rb.isKinematic = false;
             _components._rb.useGravity = true;
             _components._coll.isTrigger = false;
-            _components._rb.AddForce(UnityEngine.Random.onUnitSphere * 15, ForceMode.Impulse);
+            _components._rb.AddForce(UnityEngine.Random.onUnitSphere * 5, ForceMode.Impulse);
             detector.Deactivate();
 
         }
