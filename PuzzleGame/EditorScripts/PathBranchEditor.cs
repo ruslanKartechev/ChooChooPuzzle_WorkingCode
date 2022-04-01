@@ -51,6 +51,8 @@ namespace PuzzleGame
             GUILayout.Space(10);
             if (GUILayout.Button("SetNeighbours"))
                 me.SetNodeNeighbours();
+
+            serializedObject.Update();
             serializedObject.ApplyModifiedProperties();
 
         }

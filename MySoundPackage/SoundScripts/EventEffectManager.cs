@@ -5,16 +5,15 @@ using UnityEngine;
 namespace CommonGame.Sound {
     public class EventEffectManager : MonoBehaviour
     {
-
+        public bool Enabled = false;
         public SoundNames levelStart;
         public SoundNames levelEnd;
         public SoundNames win;
         public SoundNames loose;
-        public SoundNames lazerApproached;
-        public SoundNames portalApproached;
 
         private void Start()
         {
+            if (!Enabled) { return; }
             GameManager.Instance._events.LevelStarted.AddListener(OnLevelStart);
             GameManager.Instance._events.PlayerWin.AddListener(OnPlayerWin);
             GameManager.Instance._events.PlayerLose.AddListener(OnPlayerLoose);

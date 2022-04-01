@@ -26,8 +26,8 @@ namespace PuzzleGame
         public bool AutoConnect = true;
         private void OnEnable()
         {
-            if (AutoConnect)
-                SetNodeNeighbours();
+            SetNodeNeighbours();
+
         }
 
         public void AddNode()
@@ -47,6 +47,7 @@ namespace PuzzleGame
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
             n.parent = gameObject.transform;
+            n.eulerAngles = Vector3.zero;
             if (_transforms.Count == 0)
             {
                 ReName();
@@ -57,7 +58,7 @@ namespace PuzzleGame
             if (prev == null)
             { _transforms.Remove(prev); }
             else
-                n.position = prev.position + prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
+                n.position = prev.position + prev.forward * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Add(n);
             ReName();
         }
@@ -173,7 +174,7 @@ namespace PuzzleGame
             foreach (Transform t in _transforms)
             {
                 t.localPosition = new Vector3(t.localPosition.x,
-                    t.localPosition.y, 0);
+                    0, t.localPosition.z);
 
             }
         }
@@ -193,6 +194,7 @@ namespace PuzzleGame
         {
             GetAllPoints();
             List<SplineNode> nodes = new List<SplineNode>(_transforms.Count);
+            
             foreach (Transform t in _transforms)
             {
                 SplineNode node = t.GetComponent<SplineNode>();

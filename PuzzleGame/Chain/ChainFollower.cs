@@ -17,7 +17,7 @@ namespace PuzzleGame
             newPercent = percent;
         }
     }
-    public class ChainFollower : UnitSplineFollower
+    public class ChainFollower : BaseSplineFolower
     {
         public ChainController _Controller;
         public MoveData currentData;
@@ -50,8 +50,11 @@ namespace PuzzleGame
 
         public override bool PushFromNode(Vector2 dir)
         {
+            if (_Controller.IsEndFollower(this) == false)
+                return false;
             bool can = false;
-            _Controller.leadingFollower = this;
+      
+            _Controller.SetLeadingFollower(this);
             ChainFollower end = _Controller.GetOtherEnd();
             can = end.PushForward();
             _Controller.StartMovingChain();
@@ -74,7 +77,7 @@ namespace PuzzleGame
         }
         public bool PushForward()
         {
-            _Controller.leadingFollower = this;
+            _Controller.SetLeadingFollower(this);
             SplineNode node = FindFreeNode();
             if (node == null)
                 return false;

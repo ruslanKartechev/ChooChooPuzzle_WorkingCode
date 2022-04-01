@@ -14,7 +14,7 @@ namespace PuzzleGame
     }
 
 
-    public class PathTester : UnitSplineFollower
+    public class PathTester : BaseSplineFolower
     {
         [SerializeField] private GameObject model;
         public ChainController _Controller;
@@ -59,6 +59,7 @@ namespace PuzzleGame
         }
         public override void TakeInput(Vector2 input)
         {
+            if (input == Vector2.zero) return;
             if(onMove != null)
                 onMove(input);
         }
@@ -72,14 +73,11 @@ namespace PuzzleGame
         }
         protected override bool SetSegment(Vector2 input)
         {
-            if (_Controller.leadingFollower == null)
-            {
+            if (_Controller.LeadingFollower == null)
                 FindNewLead(input);
-            }
 
             if (currentSegment != null && currentSegment.end != null)
                 ResetCurrentNode(currentSegment.end);
-         
 
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
@@ -89,23 +87,21 @@ namespace PuzzleGame
                 return false;
             }
             SplineNode nextNode = NodeSeeker.FindNextNode(input, currentNode, result.Options);
-            if (IsChainOccupied(nextNode))
+
+            if (_Controller.IsChainOccupied(nextNode))
             {
                 FindNewLead(input);
                 return base.SetSegment(input);
             }
-            else
-            {
-                currentSegment = new Segment(currentNode, nextNode);
-                _Controller.MoveChain(currentNode);
-                onMove = MoveAlongSegment;
-                return true;
-            }
+            currentSegment = new Segment(currentNode, nextNode);
+            _Controller.MoveChain(currentNode);
+            onMove = MoveAlongSegment;
+            return true;
         }
 
         protected void FindNewLead(Vector2 input)
         {
-            if(_Controller.leadingFollower == null)
+            if(_Controller.LeadingFollower == null)
             {
                 SplineNode node = _Controller.GetLeadingFollower(input);
                 currentNode = node;
@@ -113,46 +109,39 @@ namespace PuzzleGame
             }
             else
             {
-                SplineNode old = _Controller.leadingFollower.currentNode;
+                SplineNode old = _Controller.LeadingFollower.currentNode;
                 SplineNode node = _Controller.GetLeadingFollower(input);
                 if (old != node)
                 {
                     currentNode = node;
                 }
             }
-  
         }
-
-        protected bool IsChainOccupied(SplineNode node)
-        {
-            foreach(ChainFollower n in _Controller._Followers)
-            {
-                if (node == n.GetLastNode())
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         protected override bool MoveAlongSegment(Vector2 input)
         {
             if (currentSegment == null) return false;
             if (currentSegment.currentPercent >= 5f / 100)
                 Show();
 
-            float proj = Vector2.Dot(input, (Vector2)currentSegment.Dir);
+            Vector3 planeInput = (Vector3)input;
+            planeInput.z = input.y;
+            planeInput.y = 0;
+            float proj = Vector2.Dot(planeInput, currentSegment.Dir);
             float percent = currentSegment.currentPercent;
-            if (proj > 0) // moving forward
+            if (proj >= 0) // moving forward
             {
                 percent += _settings.moveSpeed / 100;
 
                 Mathf.Clamp01(percent);
                 if (percent >= 1)
                 {
-                    // OnNodeApproach(input);
                     onMove = SetSegment;
                     return true;
+                }
+                if (percent >= 0.8f)
+                {
+                    bool allow = OnNodeApproach(input);
+                    if (allow == false) return false;
                 }
             }
             else // moving backwards
@@ -173,18 +162,22 @@ namespace PuzzleGame
         }
 
 
-        private void OnNodeApproach(Vector2 input)
+
+        private bool OnNodeApproach(Vector2 input)
         {
-            if (IsChainOccupied(currentSegment.end) == true) return;
+            if (_Controller.IsChainOccupied(currentSegment.end) == true) return false;
             bool allow = currentSegment.end.PushFromNode(input);
             if(allow == false)
             {
-                _Controller.BlockNextMovement();
-                return;
+                return false;
             }
-            _Controller.MoveChain(currentSegment.end);
             ResetCurrentNode(currentSegment.end);
+            transform.position = currentSegment.end._position;
+            _Controller.MoveChain(currentSegment.end);
+            _Controller.OnMoveMade();
             onMove = SetSegment;
+            return true;
+
         }
 
         protected override void ResetCurrentNode(SplineNode node)

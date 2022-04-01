@@ -10,7 +10,6 @@ namespace CommonGame.UI
         private StartPanel panel;
         public void Init(StartPanel _panel)
         {
-
             Init();
             panelManager = _panel;
             panel = _panel;

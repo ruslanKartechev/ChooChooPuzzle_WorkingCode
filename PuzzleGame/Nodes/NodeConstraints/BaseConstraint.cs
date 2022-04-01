@@ -14,6 +14,10 @@ namespace PuzzleGame
             SplineNode next = NodeSeeker.FindNextNode(data.ScreenDirection, current, current.linkedNodes,false);
             if (next == null || next == current)
             {
+                if (next == null)
+                    result._message = "Next node is null";
+                if (next == current)
+                    result._message = "Next node is the current one";
                 result.Allowed = false;
                 result.Options = null;
             }

@@ -18,7 +18,6 @@ namespace PuzzleGame
                 else
                     return null;
             } 
-               
 
             if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
             {
@@ -33,16 +32,16 @@ namespace PuzzleGame
                 if (res.Count > 1)
                 {
                     if (input.y >= 0)
-                        n = res.Find(x => x.transform.position.y >= from._position.y);
+                        n = res.Find(t => (t != null) && t.transform.position.z >= from._position.z);
                     else
-                        n = res.Find(x => x.transform.position.y < from._position.y);
+                        n = res.Find(t => (t != null) && t.transform.position.z < from._position.z);
                 }
                 return n;
             }
-            else
+            else if(Mathf.Abs(input.x) < Mathf.Abs(input.y))
             {
                 var res = new List<SplineNode>();
-                if (input.x >= 0)
+                if (input.y >= 0)
                     res = GetVertNodes(true, from.transform, nodes);
                 else
                     res = GetVertNodes(false, from.transform, nodes);
@@ -52,32 +51,36 @@ namespace PuzzleGame
                 if (res.Count > 1)
                 {
                     if (input.x >= 0)
-                        n = res.Find(x => x.transform.position.x >= from._position.x);
+                        n = res.Find(t => (t != null) && t.transform.position.x >= from._position.x);
                     else
-                        n = res.Find(x => x.transform.position.x < from._position.x);
+                        n = res.Find(t => (t != null) && t.transform.position.x < from._position.x);
                 }
                 return n;
             }
             return null;
-
         }
 
         public static List<SplineNode> GetHorNodes(bool right, Transform refPos, List<SplineNode> nodes)
         {
             var res = new List<SplineNode>();
+            if (nodes == null) Debug.Log("nodes are null");
+            if (refPos == null) Debug.Log("ref pos is null");
             if (right)
-                res = nodes.FindAll(x => x.transform.position.x >= refPos.position.x);
+                res = nodes.FindAll(t => (t!=null) && t.transform.position.x >= refPos.position.x);
             else
-                res = nodes.FindAll(x => x.transform.position.x < refPos.position.x);
+                res = nodes.FindAll(t => (t != null) && t.transform.position.x < refPos.position.x);
             return res;
         }
         public static List<SplineNode> GetVertNodes(bool up, Transform refPos, List<SplineNode> nodes)
         {
             var res = new List<SplineNode>();
+            if (nodes == null) Debug.Log("nodes are null");
+            if (refPos == null) Debug.Log("ref pos is null");
+
             if (up)
-                res = nodes.FindAll(x => x.transform.position.y >= refPos.position.y);
+                res = nodes.FindAll(t => (t != null) && t.transform.position.z >= refPos.position.z);
             else
-                res = nodes.FindAll(x => x.transform.position.y < refPos.position.y);
+                res = nodes.FindAll(t => (t != null) && t.transform.position.z < refPos.position.z);
             return res;
         }
     }

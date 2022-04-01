@@ -17,12 +17,12 @@ namespace CommonGame.UI
             if (levelEndPanel == null)
                 levelEndPanel = GetComponent<LevelCompletePanel>();
 
-            startPanel.Init();
-            levelEndPanel.Init();
-            controllsPanel.Init();
-            controllsPanel.HidePanel(true);
-            startPanel.HidePanel(true);
-            levelEndPanel.HidePanel(true);
+            startPanel?.Init();
+            levelEndPanel?.Init();
+            controllsPanel?.Init();
+            controllsPanel?.HidePanel(true);
+            startPanel?.HidePanel(true);
+            levelEndPanel?.HidePanel(true);
 
             InitButtons();
 

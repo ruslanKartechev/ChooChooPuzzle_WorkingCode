@@ -52,9 +52,10 @@ namespace CommonGame
         }
         public void OnDataLoaded()
         {
+            _events.LevelLoaded.Invoke();
             if (DoStartGame)
             {
-                levelManager.InitLevel(levelManager.CurrentLevelIndex);
+                //levelManager.InitLevel(levelManager.CurrentLevelIndex);
             }
         }
 

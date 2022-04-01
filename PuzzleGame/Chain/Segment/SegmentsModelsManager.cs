@@ -85,16 +85,27 @@ namespace PuzzleGame
             if (GUILayout.Button("GetModels"))
                 me.GetAllModels();
             if (GUILayout.Button("InitModels"))
+            {
+                me.GetAllModels();
                 me.InitModels();
+            }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Scale"))
+            {
+                me.GetAllModels();
                 me.ScaleModels();
+            }
+              
             if (GUILayout.Button("ApplyRotation"))
+            {
+                me.GetAllModels();
                 me.ApplyRotation();
+            }
+              
             GUILayout.EndHorizontal();
-
+            serializedObject.ApplyModifiedProperties();
         }
 
     }

@@ -12,7 +12,7 @@ namespace PuzzleGame
         public Transform target;
         [Space(10)]
         public float angle = 0;
-        public Direction around = Direction.forward;
+        public Direction around = Direction.up;
         public float distance = 1;
 
 

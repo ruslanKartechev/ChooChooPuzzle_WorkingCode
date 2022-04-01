@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Commongame.Bezier
+namespace CommonGame.Bezier
 {
     public class Bezier
     {
