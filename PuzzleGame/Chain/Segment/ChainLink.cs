@@ -14,8 +14,8 @@ namespace PuzzleGame
 
         private void Start()
         {
-            InitCuttable();
-            detector.onCut = OnCutDetected;
+            //InitCuttable();
+            //detector.onCut = OnCutDetected;
         }
         public void InitComponents(ChainLinkComponents components)
         {

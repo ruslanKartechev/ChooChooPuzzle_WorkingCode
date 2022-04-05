@@ -62,6 +62,7 @@ namespace PuzzleGame
             _transforms.Add(n);
             ReName();
         }
+
         private void AddToFirst()
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
@@ -82,6 +83,7 @@ namespace PuzzleGame
             _transforms.Insert(0, n);
             ReName();
         }
+
         public void ReName()
         {
             if (_transforms.Count == 0) return;
@@ -89,7 +91,6 @@ namespace PuzzleGame
             {
                 if (_transforms[i] != null)
                     _transforms[i].name = "Node + " + (i + 1).ToString();
-
             }
         }
 
@@ -127,46 +128,65 @@ namespace PuzzleGame
         public void CenterAround_F()
         {
             if (_transforms.Count == 0) return;
-            if (_transforms.Count == 1)
+            foreach(Transform t in _transforms)
             {
-                Debug.Log("1 case");
-                _transforms[0].position = transform.position;
-                return;
+                t.parent = null;
             }
-            List<Vector3> directions = new List<Vector3>(_transforms.Count - 1);
-            for (int i = 1; i < _transforms.Count; i++)
+            transform.position = _transforms[0].position;
+            foreach (Transform t in _transforms)
             {
-                directions.Add(_transforms[i].position - _transforms[0].position);
-
+                t.parent = transform;
             }
-            _transforms[0].localPosition = Vector3.zero;
-            for (int i = 1; i < _transforms.Count; i++)
-            {
-                _transforms[i].position = _transforms[0].position + directions[i - 1];
+            #region Old
+            //if (_transforms.Count == 1)
+            //{
+            //    Debug.Log("1 case");
+            //    _transforms[0].position = transform.position;
+            //    return;
+            //}
+            //List<Vector3> directions = new List<Vector3>(_transforms.Count - 1);
+            //for (int i = 1; i < _transforms.Count; i++)
+            //{
+            //    directions.Add(_transforms[i].position - _transforms[0].position);
 
-            }
-
-
+            //}
+            //_transforms[0].localPosition = Vector3.zero;
+            //for (int i = 1; i < _transforms.Count; i++)
+            //{
+            //    _transforms[i].position = _transforms[0].position + directions[i - 1];
+            //}
+            #endregion
         }
         public void CenterAround_L()
         {
             if (_transforms.Count == 0) return;
-            if (_transforms.Count == 1)
+            if (_transforms.Count == 0) return;
+            foreach (Transform t in _transforms)
             {
-                _transforms[0].position = transform.position;
-                return;
+                t.parent = null;
             }
-            List<Vector3> directions = new List<Vector3>(_transforms.Count - 1);
-            for (int i = 0; i < _transforms.Count - 1; i++)
+            transform.position = _transforms[_transforms.Count-1].position;
+            foreach (Transform t in _transforms)
             {
-                directions.Add(_transforms[i].position - _transforms[_transforms.Count - 1].position);
+                t.parent = transform;
             }
-            _transforms[_transforms.Count - 1].localPosition = Vector3.zero;
-            for (int i = 0; i < _transforms.Count - 1; i++)
-            {
-                _transforms[i].position = _transforms[_transforms.Count - 1].position + directions[i];
-
-            }
+            #region Old
+            //if (_transforms.Count == 1)
+            //{
+            //    _transforms[0].position = transform.position;
+            //    return;
+            //}
+            //List<Vector3> directions = new List<Vector3>(_transforms.Count - 1);
+            //for (int i = 0; i < _transforms.Count - 1; i++)
+            //{
+            //    directions.Add(_transforms[i].position - _transforms[_transforms.Count - 1].position);
+            //}
+            //_transforms[_transforms.Count - 1].localPosition = Vector3.zero;
+            //for (int i = 0; i < _transforms.Count - 1; i++)
+            //{
+            //    _transforms[i].position = _transforms[_transforms.Count - 1].position + directions[i];
+            //}
+            #endregion
         }
 
         public void SetDepth()

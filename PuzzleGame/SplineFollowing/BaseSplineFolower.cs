@@ -24,7 +24,11 @@ namespace PuzzleGame
         {
             return transform;
         }
-        public virtual bool PushFromNode(Vector2 dir)
+        public virtual bool PushFromNode(ISplineFollower pusher)
+        {
+            return true;
+        }
+        public virtual bool CanBePushed()
         {
             return true;
         }
@@ -41,6 +45,7 @@ namespace PuzzleGame
         {
             StopNodeSnapping();
             SnapToClosest();
+            onMove = null;
         }
 
 
@@ -50,6 +55,17 @@ namespace PuzzleGame
 
         }
         #endregion
+
+
+        public virtual void Prepare() { }
+        public SplineNode GetCurrentNode()
+        {
+            return currentNode;
+        }
+        public void SetCurrentNode(SplineNode node)
+        {
+            currentNode = node;
+        }
 
         public virtual void InitSettings(FollowerSettings settings)
         {
@@ -61,13 +77,18 @@ namespace PuzzleGame
             currentNode = node;
             if (snap)
                 transform.position = currentNode._position;
-            OccupyNode();
+            OccupyCurrentNode();
         }
 
-        protected virtual void ResetCurrentNode(SplineNode node)
+        protected virtual void ResetCurrentNode(SplineNode node, bool forced = false)
         {
+            if (currentNode != null)
+                currentNode.ReleaseNode();
             currentNode = node;
-            OccupyNode();
+            if (forced)
+                currentNode.SetCurrentFollowerForced(this);
+            else
+                currentNode.SetCurrentFollower(this);
         }
 
 
@@ -76,16 +97,16 @@ namespace PuzzleGame
         {
             if (input == Vector2.zero) { Debug.Log("zero input"); return false; }
             SplineNode res = NodeSeeker.FindNextNode(input, currentNode);
-            if (res == null)
-            {
-                DebugMovement("Next node NOT found");
-                return false;
-            }
-            else
+            if (res != null)
             {
                 currentSegment = new Segment(currentNode, res);
                 onMove = MoveAlongSegment;
                 return true;
+            }
+            else
+            {
+                DebugMovement("Next node NOT found");
+                return false;
             }
         }
 
@@ -96,7 +117,7 @@ namespace PuzzleGame
             float percent = currentSegment.currentPercent;
             if (proj > 0) // moving forward
             {
-                percent += _settings.moveSpeed / 100;
+                percent += _settings.TesterSpeed / 100;
                 Mathf.Clamp01(percent);
                 if (percent >= 0.9f)
                 {
@@ -111,7 +132,7 @@ namespace PuzzleGame
             }
             else // moving backward
             {
-                percent -= _settings.moveSpeed / 100;
+                percent -= _settings.TesterSpeed / 100;
                 Mathf.Clamp01(percent);
                 if (percent <= 0f)
                 {
@@ -145,7 +166,7 @@ namespace PuzzleGame
             onMove = null;
             if (slow)
             {
-                float time = _settings.totalSnapTime;
+                float time = _settings.NodeMovingTime;
                 float dist = (transform.position - currentNode._position).magnitude;
                 time *= Mathf.Clamp01(dist / currentSegment.Distance);
                 StopNodeSnapping();
@@ -169,7 +190,7 @@ namespace PuzzleGame
             }
 
             onMove = null;
-            float time = _settings.totalSnapTime;
+            float time = _settings.NodeMovingTime;
             float dist = (transform.position - node._position).magnitude;
             time *= Mathf.Clamp01(dist / currentSegment.Distance);
             StopNodeSnapping();
@@ -180,20 +201,18 @@ namespace PuzzleGame
             currentSegment = null; // setting segment to null
         }
 
-        public void StopNodeSnapping()
+        public virtual void StopNodeSnapping()
         {
             if (nodeSnapping != null)
                 StopCoroutine(nodeSnapping);
         }
 
-        protected List<SplineNode> moveList = new List<SplineNode>();
         protected SplineNode nextNode = null;
-        protected Coroutine movingAlongNodes;
         protected float listMoveTime = 0.2f;
-        public virtual void MoveToNode(SplineNode node, Action onEnd = null)
+        public virtual bool MoveToNode(SplineNode node, Action onEnd = null)
         {
-            if (node == null) { Debug.Log("Null node passed"); return; }
-            if (node == currentNode) return;
+            if (node == null) { Debug.Log("Null node passed"); return false; }
+            if (node == currentNode) return false;
             if (nodeSnapping != null) StopCoroutine(nodeSnapping);
             if (nextNode != null)
             {
@@ -203,8 +222,9 @@ namespace PuzzleGame
             currentNode.ReleaseNode();
             nextNode = node;
             currentNode = node;
-            OccupyNode();
+            OccupyCurrentNode();
             nodeSnapping = StartCoroutine(SnappingToNode(nextNode.transform, listMoveTime, onEnd));
+            return true;
         }
 
         protected virtual IEnumerator SnappingToNode(Transform node, float time, Action onEnd = null)
@@ -224,18 +244,17 @@ namespace PuzzleGame
             onEnd?.Invoke();
         }
 
-        public SplineNode GetLastNode()
+        public virtual SplineNode GetActualNode()
         {
-            if (moveList.Count == 0) return currentNode;
-            else
-                return moveList[moveList.Count - 1];
+            return currentNode;
         }
 
-        public virtual void OccupyNode()
+        public virtual bool OccupyCurrentNode()
         {
-            if (currentNode == null) return;
+            if (currentNode == null) return false;
             if (OccupyNodes)
-                currentNode.SetCurrentFollower(this);
+                currentNode.SetCurrentFollowerForced(this);
+            return true;
         }
 
 

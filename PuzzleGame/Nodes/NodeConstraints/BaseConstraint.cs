@@ -9,23 +9,21 @@ namespace PuzzleGame
     {
         public virtual ConstraintResult CheckConstraint(ConstraintData data)
         {
-            SplineNode current = data.chainPositions.testerPosition; // check tester or lead
+            SplineNode current = data.chainPositions.leadingNode; // check tester or lead
             ConstraintResult result = new ConstraintResult();
             SplineNode next = NodeSeeker.FindNextNode(data.ScreenDirection, current, current.linkedNodes,false);
             if (next == null || next == current)
             {
-                if (next == null)
-                    result._message = "Next node is null";
-                if (next == current)
-                    result._message = "Next node is the current one";
                 result.Allowed = false;
                 result.Options = null;
+                result._message = ConstraintMessages.End;
             }
             else
             {
                 result.Allowed = true;
                 result.Options = new List<SplineNode>();
                 result.Options.Add(next);
+                result._message = ConstraintMessages.OK;
             }
 
             return result;

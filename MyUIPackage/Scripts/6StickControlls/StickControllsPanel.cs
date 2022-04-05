@@ -6,7 +6,7 @@ using CommonGame.Controlls;
 using UnityEngine.EventSystems;
 namespace CommonGame.UI
 {
-    public class StickControllsPanel : UIPanelManager
+    public class StickControllsPanel : PanelManager
     {
 
         [SerializeField] private StickControllsPanelUI panelUI;
@@ -28,7 +28,7 @@ namespace CommonGame.UI
         private GraphicsRaycastHandler _raycastHandler;
         public void Init()
         {
-            mPanel = panelUI;
+            m_ui = panelUI;
             panelUI.Init(this);
             _raycastHandler = new GraphicsRaycastHandler();
             _raycastHandler.Init(_graphicsRaycaster, _eventSystem);

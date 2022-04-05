@@ -4,14 +4,14 @@ using UnityEngine;
 using System;
 namespace CommonGame.UI
 {
-    public class LevelCompletePanel : UIPanelManager
+    public class LevelCompletePanel : PanelManager
     {
         [SerializeField] private LevelCompletePanelUI panelUI;
         public Action MainButtonPressed;
         public void Init()
         {
             panelUI.Init(this);
-            mPanel = panelUI;
+            m_ui = panelUI;
         }
         public void OnNewLevel(int currentLevel)
         {

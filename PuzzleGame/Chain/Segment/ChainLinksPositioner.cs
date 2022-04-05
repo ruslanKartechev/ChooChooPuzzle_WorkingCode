@@ -15,8 +15,8 @@ namespace PuzzleGame
 
         public void StartMovement(ChainSegmentInfo info, Transform end_1, Transform end_2)
         {
+            if (movingHandler != null) return;
             IsPaused = false;
-            StopMovement();
             if(gameObject.activeInHierarchy)
             StartCoroutine(MovingChain(info, end_1, end_2));
         }

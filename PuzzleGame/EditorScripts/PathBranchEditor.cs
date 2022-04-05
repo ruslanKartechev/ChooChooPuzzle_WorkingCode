@@ -62,6 +62,7 @@ namespace PuzzleGame
         {
             me.UpdatePoints();
             DrawLinks(me._transforms);
+            serializedObject.Update();
             serializedObject.ApplyModifiedProperties();
         }
 

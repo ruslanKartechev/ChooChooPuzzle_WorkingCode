@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using CommonGame;
 namespace PuzzleGame
 {
     public class FinishNode : SplineNode
@@ -14,17 +14,23 @@ namespace PuzzleGame
         [Space(10)]
         [SerializeField] private List<Transform> _finishTrack = new List<Transform>();
         public List<Transform> FinishTrack { get { return _finishTrack; } }
-
+        private IEffect effects;
         private void Start()
         {
+            effects = GetComponentInChildren<IEffect>();
+            if(effects == null) { Debug.Log("<color=red>Finish Node effects are not assigned"); }
+            effects?.Init();
             InitConstraints();
             InitFinishNode();
+            GameManager.Instance._events.LevelStarted.AddListener(OnGameStart);
+        }
+        private void OnGameStart()
+        {
             FinishMatcherController.Instance.RegisterFinish(Number);
         }
 
         public void InitFinishNode()
         {
-            OnOccupied = OnFinishOccupied;
             _type = NodeType.Finish;
             gameObject.name = GONames.FinishNode;
         }
@@ -33,15 +39,17 @@ namespace PuzzleGame
         {
             if (_number == num) 
             {
-                OnFinishOccupied();
+                OnCorrectOccupied();
                 return true;
             }
             else
                 return false;
         }
 
-        public void OnFinishOccupied()
+
+        public void OnCorrectOccupied()
         {
+            effects?.Play();
             OnFinishReached?.Invoke();
         }
 

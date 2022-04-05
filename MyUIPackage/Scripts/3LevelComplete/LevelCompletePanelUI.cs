@@ -6,7 +6,7 @@ using TMPro;
 
 namespace CommonGame.UI
 {
-    public class LevelCompletePanelUI : UIPanel
+    public class LevelCompletePanelUI : PanelUI
     {
         private LevelCompletePanel panel;
         [Space(5)]

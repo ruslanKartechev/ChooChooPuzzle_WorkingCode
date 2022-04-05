@@ -5,12 +5,11 @@ using UnityEditor;
 using System;
 namespace PuzzleGame
 {
-
+    [DefaultExecutionOrder(0)]
     public class SplineNode : MonoBehaviour
     {
         [SerializeField] protected NodeType _type;
         public NodeType Type { get { return _type; } }
-
 
         [SerializeField] private bool HasAngleConstr;
         [SerializeField] private AngleConstraint AngleConst;
@@ -28,7 +27,8 @@ namespace PuzzleGame
                     return true;
             }
         }
-        public ISplineFollower currentFollower { get; set; }
+        public ISplineFollower currentFollower { get { return _currentFollower; } }
+        private ISplineFollower _currentFollower = null;
         public List<IConstrained> _Constraints { get { return mConstraints; } }
 
 
@@ -43,9 +43,6 @@ namespace PuzzleGame
                 AddAngleConstr();
         }
 
-
-
-
         #region Constraints
         private void AddBaseConstr()
         {
@@ -56,7 +53,6 @@ namespace PuzzleGame
         {
             mConstraints.Add(AngleConst);
         }
-
         #endregion
 
 
@@ -67,31 +63,36 @@ namespace PuzzleGame
                 linkedNodes.Add(node);
         }
 
-        public bool PushFromNode(Vector2 dir)
+
+        public bool PushFromNode(ISplineFollower pusher)
         {
             bool allow = true;
-            if(currentFollower != null)
+            if (currentFollower != null)
             {
-                allow = currentFollower.PushFromNode(dir);
+                allow = currentFollower.PushFromNode(pusher);
             }
+            else
+                Debug.Log("no current follower");
+            
             return allow;
-         
         }
+        
         public bool SetCurrentFollower(ISplineFollower follower) 
         {
-            if(currentFollower == null)
+            if(_currentFollower == null)
             {
                 OnOccupied?.Invoke();
-                currentFollower = follower;
+                _currentFollower = follower;
                 return true;
             }
+            Debug.Log("<color=red>DO NOT ALLOW OCCUPY</color>");
             return false;
         }
-        public void SetCurrentFollowerForce(ISplineFollower follower) => currentFollower = follower;
+        public void SetCurrentFollowerForced(ISplineFollower follower) => _currentFollower = follower;
 
         public virtual void ReleaseNode()
         {
-            currentFollower = null;
+            _currentFollower = null;
         }
     }
 

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 namespace CommonGame.UI
 {
-    public class StartPanelUI : UIPanel
+    public class StartPanelUI : PanelUI
     {
         private StartPanel panel;
         public void Init(StartPanel _panel)

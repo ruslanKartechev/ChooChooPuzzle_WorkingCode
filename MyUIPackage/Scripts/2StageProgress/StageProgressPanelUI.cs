@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace CommonGame.UI
 {
-    public class StageProgressPanelUI : UIPanel
+    public class StageProgressPanelUI : PanelUI
     {
         [Space(5)]
         [SerializeField] private GameObject EditorPanel;

@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 namespace CommonGame.UI
 {
-    public class StartPanel : UIPanelManager
+    public class StartPanel : PanelManager
     {
         [SerializeField] private StartPanelUI panelUI;
         public Action MainButtonPressed;
@@ -13,7 +13,7 @@ namespace CommonGame.UI
         {
             if (panelUI == null)
                 panelUI = FindObjectOfType<StartPanelUI>();
-            mPanel = panelUI;
+            m_ui = panelUI;
             panelUI.Init(this);
         }
 

@@ -6,8 +6,8 @@ namespace PuzzleGame
 {
     public interface ISplineFollower
     {
-
         Transform GetTransform();
-        bool PushFromNode(Vector2 dir);
+        bool PushFromNode(ISplineFollower pusher);
+       // bool CanBePushed();
     }
 }

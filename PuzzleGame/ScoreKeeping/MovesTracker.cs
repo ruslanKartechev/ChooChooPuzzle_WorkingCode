@@ -1,29 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using CommonGame;
-
 namespace PuzzleGame
 {
     public class MovesTracker
     {
-
+        public Action onValueChange;
         public int TotalMoves = 0;
-        public void Init()
+        public void Init(Action onChange)
         {
-            GameManager.Instance._events.MoveMade.AddListener(OnMoveMade);
+            onValueChange = onChange;
             TotalMoves = 0;
+            onValueChange?.Invoke();
         }
 
-        private void OnMoveMade()
+        public void Refresh()
+        {
+            TotalMoves = 0;
+            onValueChange?.Invoke();
+
+        }
+        public void AddCount()
         {
             TotalMoves++;
-            //Debug.Log("<color=blue>Total Moves: " + TotalMoves + "</color>");
+            onValueChange?.Invoke();
         }
-
 
 
 

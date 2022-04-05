@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace CommonGame.UI
 {
-    public class StageProgressPanel : UIPanelManager
+    public class StageProgressPanel : PanelManager
     {
         [SerializeField] private StageProgressPanelUI panelUI;
         private bool IsEditor;
         public void Init()
         {
-            mPanel = panelUI;
+            m_ui = panelUI;
             panelUI.Init(this);
         }
 

@@ -17,7 +17,7 @@ namespace PuzzleGame
 
         public Segment()
         {
-
+           
         }
         public Segment(SplineNode _start, SplineNode _end)
         {
@@ -28,6 +28,13 @@ namespace PuzzleGame
             if(end == null) { Debug.Log("End node is null");return; }
             _direction = (end.transform.position - start.transform.position).normalized;
             _distance = (end.transform.position - start.transform.position).magnitude;
+        }
+        public Vector2 GetScreenDir()
+        {
+            Vector2 endPos = Camera.main.WorldToScreenPoint(end._position);
+            Vector2 startPos = Camera.main.WorldToScreenPoint(start._position);
+            return endPos - startPos;
+
         }
     }
 }

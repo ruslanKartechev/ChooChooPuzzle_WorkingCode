@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using System;
 namespace CommonGame.UI
 {
-    public class StickControllsPanelUI : UIPanel
+    public class StickControllsPanelUI : PanelUI
     {
         [SerializeField] private Image backCircle;
         [SerializeField] private Image stickImage;

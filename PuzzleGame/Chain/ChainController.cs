@@ -15,69 +15,111 @@ namespace PuzzleGame
         [Header("Pivot Followers")]
         [Space(10)]
         [SerializeField] private List<ChainFollower> _followers = new List<ChainFollower>();
-
         [Header("Start nodes")]
         [SerializeField] private List<SplineNode> _nodes = new List<SplineNode>();
         [Header("Chain segment managers")]
         [SerializeField] private List<ChainSegmentManager> _chainSegments = new List<ChainSegmentManager>();
-        [Space(10)]
-        [SerializeField] private PathTester tester;
 
+        private ChainFollower _leading;
         private ChainFollower end_1;
         private ChainFollower end_2;
-        [SerializeField] private ChainFollower _leading;
+        public ChainFollower End_1 { get { return end_1; } }
+        public ChainFollower End_2 { get { return end_2; } }
+
 
         public ChainConstaintHandler _ConstraintHandler;
         private ChainEffectsController _Effects;
+        private PositionRecorder _recorder;
 
         private Action OnCurrentMoveEnd;
-
         private Action<ChainFollower> _OnFollowerClick;
         private Action _OnFollowerRelease;
         private Action<Vector2> _OnFollowerInput;
-
 
         public ChainFollower LeadingFollower { get { return _leading; } }
         public Action<ChainFollower> OnFollowerClick { get { return _OnFollowerClick; } }
         public Action OnFollowerRelease { get { return _OnFollowerRelease; } }
         public Action<Vector2> OnFollowerInput { get { return _OnFollowerInput; } }
 
+        private int TotalMoves = 0;
+        [Space(10)]
+        [SerializeField] private ChainLineTester TesterPF;
+        [HideInInspector] public ChainLineTester _testerInst;
+
         private void Start()
         {
+            if (TesterPF == null) { Debug.Log("<color=red>NO TESTER PF GIVEN </color>"); }
+            else
+            {
+                _testerInst = Instantiate(TesterPF);
+                _testerInst.Hide();
+            }
             InitChain();
         }
 
+        #region Init
         private void InitChain()
         {
+            SetNodes();
             foreach (ChainFollower f in _followers)
             {
                 f.Init(this, settings.followerSettings);
             }
+            ConnectChainFollowers();
             GetChainSegments();
             _chainSegments.TrimExcess();
             InitSegments();
-
-            if (tester == null) Debug.Log("no tester");
-
-            SetNodes();
             SetChainPositions();
-
             end_1 = _followers[0];
             end_2 = _followers[_followers.Count - 1];
-
-            tester.SnapTo(_nodes[_nodes.Count - 1]);
-            tester.Init(this, settings.followerSettings);
-            tester.HideForced();
+            InitLead();
 
             _ConstraintHandler = new ChainConstaintHandler();
             _ConstraintHandler.chain = this;
 
             _Effects = new ChainEffectsController(settings.ChainEffects, _chainSegments);
-
+            _recorder = new PositionRecorder();
             GameManager.Instance._events.LevelStarted.AddListener(OnLevelStart);
-            GameManager.Instance._events.LevelFinished.AddListener(OnLevelEnd);
+            GameManager.Instance._events.LevelEndreached.AddListener(OnLevelEnd);
         }
 
+        private void InitLead()
+        {
+            List<IChainFollower> chain_2 = new List<IChainFollower>(_followers.Count);
+            List<IChainFollower> chain_1 = new List<IChainFollower>(_followers.Count);
+
+            for (int i = 0; i < _followers.Count; i++)
+            {
+                chain_1.Add(_followers[i]);
+            }
+
+            for (int i = _followers.Count-1; i >= 0; i--)
+            {
+                chain_2.Add(_followers[i]);
+            }
+            end_1.SetupLead(chain_1);
+            end_2.SetupLead(chain_2);
+
+        }
+        public List<SplineNode> GetChainNodes(ChainFollower follower)
+        {
+            List<SplineNode> hist = new List<SplineNode>(_followers.Count);
+            if (follower == end_1)
+            {
+                for (int i = _followers.Count - 1; i >= 0; i--)
+                {
+                    hist.Add(_followers[i].currentNode);
+                }
+
+            } else if(follower == end_2)
+            {
+                for (int i = 0; i < _followers.Count; i++)
+                {
+                    hist.Add(_followers[i].currentNode);
+                }
+            }
+            return hist;
+        }
         private void OnLevelStart()
         {
             InitFollowerActions();
@@ -112,38 +154,53 @@ namespace PuzzleGame
             }
         }
 
-
-
+        #endregion
         public void OnClick(ChainFollower follower)
         {
-            tester.SnapTo(follower.currentNode);
-            tester.HideForced();
-            StartMovingChain();
+            foreach (ChainFollower f in _followers)
+                f.Prepare();
+            _OnFollowerInput = MoveByInput;
+            if (follower == end_1 || follower == end_2)
+                _leading = follower;
+            else
+                _leading = end_2;
+            _leading.ResetFollower();
+            _leading.SetAsLead();
+            StartMovingLinks();
             _Effects?.ExecuteEffect(ChainEffects.Start);
         }
 
         public void OnRelease()
         {
-            tester.Hide();
-            tester.OnMoveEnd();
-            _leading = null;
-            StopMovingChain();
+            _leading?.ReleaseLead();
+            StopAllFollowers();
+            foreach (ChainFollower f in _followers)
+                f.ClearMoverHistory();
             _Effects?.ExecuteEffect(ChainEffects.Stop);
+            _OnFollowerInput = null;
+            _leading = null;
         }
         public void MoveByInput(Vector2 input)
         {
-            tester.TakeInput(input);
+            LeadingFollower.MoveLead(input);
         }
 
         public void MoveChain(SplineNode NexNode)
         {
-            if (_leading != null)
-                _leading.MoveLead(NexNode, OnMoveEnd);
         }
 
+        public void RecordPosition()
+        {
+            _recorder.RecordPosision(new PositionData(_followers, TotalMoves));
+            TotalMoves++;
+        }
         public void SetLeadingFollower(ChainFollower follower)
         {
+            _leading?.ReleaseLead(); // old lead
+            if (follower == null) { Debug.LogError("Trying to assign lead to null");return; }
             _leading = follower;
+            _leading?.ResetFollower();
+            _leading?.SetAsLead();
         }
 
         public void Cut(ChainSegmentManager segmentCaller, int linkIndex)
@@ -166,72 +223,18 @@ namespace PuzzleGame
             }
         }
 
-        public ChainFollower GetOtherEnd()
-        {
-            if (_leading == null) { Debug.Log("No Leading Follower"); return end_1; }
-            if (_leading == end_1)
-            {
-                _leading = end_2;
-            }
-            else
-            {
-                _leading = end_1;
-            }
-            return _leading;
-        }
 
-        public SplineNode GetLeadingFollower(Vector2 input)
-        {
-            ChainFollower lead = null;
-            if (Mathf.Abs(input.x) > Mathf.Abs(input.y))
-            {
-                if (input.x >= 0)
-                {
-                    if (end_1.GetLastNode()._position.x >= end_2.GetLastNode()._position.x)
-                        lead = end_1;
-                    else
-                        lead = end_2;
-                }
-                else
-                {
-                    if (end_1.GetLastNode()._position.x < end_2.GetLastNode()._position.x)
-                        lead = end_1;
-                    else
-                        lead = end_2;
-                }
-            }
-            else
-            {
-                if (input.y >= 0)
-                {
-                    if (end_1.GetLastNode()._position.z >= end_2.GetLastNode()._position.z)
-                        lead = end_1;
-                    else
-                        lead = end_2;
-                }
-                else
-                {
-                    if (end_1.GetLastNode()._position.z < end_2.GetLastNode()._position.z)
-                        lead = end_1;
-                    else
-                        lead = end_2;
-                }
-            }
-            _leading = lead;
-            SplineNode node = lead.GetLastNode();
-            return node;
-        }
-        
-        public void StartMovingChain()
+        #region SegmentLinks
+        public void StartMovingLinks()
         {
             foreach (ChainSegmentManager chain in _chainSegments)
             {
-                if(chain != null)
+                if (chain != null)
                     chain.StartChainMovement();
             }
         }
 
-        public void StopMovingChain()
+        public void StopMovingLinks()
         {
             foreach (ChainSegmentManager chain in _chainSegments)
             {
@@ -239,12 +242,14 @@ namespace PuzzleGame
                     chain.StopChainMovement();
             }
         }
+        #endregion
 
+        #region Info
         public bool IsChainOccupied(SplineNode node)
         {
             foreach (ChainFollower n in _followers)
             {
-                if (node == n.GetLastNode())
+                if (node == n.GetActualNode())
                 {
                     return true;
                 }
@@ -261,18 +266,39 @@ namespace PuzzleGame
         public ChainPositionInfo GetChainPosition()
         {
             ChainPositionInfo info = new ChainPositionInfo();
-            info.leadingNode = _leading.GetLastNode();
-            info.testerPosition = tester.currentNode;
+            info.leadingNode = _leading.GetActualNode();
+            //info.testerPosition = _pathTester.currentNode;
             List<SplineNode> positions = new List<SplineNode>(_followers.Count);
             foreach (ChainFollower f in _followers)
-                positions.Add(f.GetLastNode());
+                positions.Add(f.GetActualNode());
             info.chainNodes = positions;
             return info;
         }
-
-        public virtual void OnMoveMade()
+        #endregion
+        public void OnMoveMade()
         {
+            RecordPosition();
             GameManager.Instance._events.MoveMade.Invoke();
+        }
+
+        private void StopAllFollowers()
+        {
+            foreach (ChainFollower f in _followers)
+                f.StopNodeSnapping();
+        }
+        public ChainFollower ResetLead()
+        {
+            _leading?.ReleaseLead();
+            if (_leading == null)
+                _leading = end_2;
+            else if (_leading == end_1)
+                _leading = end_2;
+            else if (_leading == end_2)
+                _leading = end_1;
+            foreach (ChainFollower f in _followers)
+                f.ResetFollower();
+            _leading?.SetAsLead();
+            return _leading;
         }
 
         #region NodeTypesHandler
@@ -296,44 +322,42 @@ namespace PuzzleGame
             if (finish.CompareNumbers(_number))
             {
                 Debug.Log("<color=green> Finish Found: " + _number.ToString() + " </color>");
-                OnRelease();
+                foreach (ChainFollower f in _followers)
+                    f.DisableFollower();
                 InitFollowerActions(true);
+                end_1.SuccessLightEffect();
+                end_2.SuccessLightEffect();
                 FinishMatcherController.Instance.FinishReached(_number);
             }
             else
+            {
                 Debug.Log("<color=red> Wrong finish " + _number.ToString() + " </color>");
+                End_1.BlockedLightEffect();
+                End_2.BlockedLightEffect();
+            }
         }
         #endregion
 
 
-
-        #region OnMovementEnd
-        public void OnMoveEnd()
+        public void HandleConstraintMessage(string message)
         {
-            if(_leading != null)
-                CheckNodeType(_leading.currentNode);
-            OnCurrentMoveEnd?.Invoke();
-            OnCurrentMoveEnd = null;
+            switch (message)
+            {
+                case ConstraintMessages.WrongAngle:
+                    _Effects.ExecuteEffect(ChainEffects.Shake);
+                    break;
+                case ConstraintMessages.Blocked:
+                    end_1.BlockedLightEffect();
+                    end_2.BlockedLightEffect();
+                    break;
+            }
         }
-
-        public void BlockNextMovement()
-        {
-            OnCurrentMoveEnd = OnMovementBlocked;
-        }
- 
-        private void OnMovementBlocked()
-        {
-            OnRelease();
-            _Effects.ExecuteEffect(ChainEffects.Shake);
-        }
-        #endregion
-
 
 
         #region FromEditor
         public void ConnectChainFollowers()
         {
-            if (_followers.Count < 3) { Debug.Log("Min amount of links is 3"); return; }
+            //if (_followers.Count < 3) { Debug.Log("Min amount of links is 3"); return; }
             _followers[0].ResetLinks();
             _followers[0].AddLink(_followers[1]);
             for (int i = 1; i < _followers.Count; i++)
@@ -376,8 +400,8 @@ namespace PuzzleGame
             for (int i = 0; i < _followers.Count; i++)
             {
                 if (_nodes[i] == null) { Debug.Log("node is null"); return; }
+                _followers[i].OccupyNodes = true;
                 _followers[i].SetCurrentNode(_nodes[i], true);
-
             }
         }
 
@@ -390,9 +414,30 @@ namespace PuzzleGame
                 if (temp != null && _chainSegments.Contains(temp) == false)
                 {
                     _chainSegments.Add(temp);
+                    SetSegmentEnds(temp, _chainSegments.IndexOf(temp));
                 }
             }
         }
+        private void SetSegmentEnds(ChainSegmentManager segment, int index)
+        {
+            if(index == 0)
+            {
+                segment.pivot_1 = _followers[0].transform;
+                segment.pivot_2 = _followers[1].transform;
+            }
+            else if(index == _followers.Count-2) 
+            {
+                segment.pivot_1 = _followers[_followers.Count - 2].transform;
+                segment.pivot_2 = _followers[_followers.Count - 1].transform;
+            }
+            else
+            {
+                segment.pivot_1 = _followers[index].transform;
+                segment.pivot_2 = _followers[index+1].transform;
+
+            }
+        }
+
 
         public void SetChainPositions()
         {

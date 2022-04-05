@@ -8,7 +8,7 @@ namespace CommonGame.UI
     {
         public StartPanel startPanel;
         public LevelCompletePanel levelEndPanel;
-        public StickControllsPanel controllsPanel;
+        public ProgressPanel progressPanel;
         public void Init()
         {
 
@@ -19,8 +19,8 @@ namespace CommonGame.UI
 
             startPanel?.Init();
             levelEndPanel?.Init();
-            controllsPanel?.Init();
-            controllsPanel?.HidePanel(true);
+            progressPanel?.Init();
+            progressPanel?.HidePanel(true);
             startPanel?.HidePanel(true);
             levelEndPanel?.HidePanel(true);
 
@@ -54,11 +54,13 @@ namespace CommonGame.UI
 
         private void OnNewLevel()
         {
+            progressPanel.HidePanel(true);
             startPanel.OnNewLevel(GameManager.Instance.levelManager.CurrentLevelIndex + 1 );
             levelEndPanel.OnNewLevel(GameManager.Instance.levelManager.CurrentLevelIndex + 1);
         }
         public void OnLevelFinishReached()
         {
+            progressPanel.HidePanel(true);
             levelEndPanel.ShowPanel();
         }
 
@@ -66,14 +68,17 @@ namespace CommonGame.UI
         private void StartGame()
         {
             GameManager.Instance._events.LevelStarted.Invoke();
+            progressPanel.ShowPanel(false);
         }
         private void RestartLevel()
         {
             GameManager.Instance.levelManager.RestartLevel();
+            progressPanel.ShowPanel(true);
         }
         private void NextLevel()
         {
             GameManager.Instance.levelManager.NextLevel();
+            progressPanel.HidePanel(true);
         }
 
     }
