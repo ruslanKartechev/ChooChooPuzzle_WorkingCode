@@ -96,7 +96,7 @@ namespace PuzzleGame
         protected virtual bool SetSegment(Vector2 input)
         {
             if (input == Vector2.zero) { Debug.Log("zero input"); return false; }
-            SplineNode res = NodeSeeker.FindNextNode(input, currentNode);
+            SplineNode res = NodeSeeker.FindNextNode(input, currentNode,null,null,true);
             if (res != null)
             {
                 currentSegment = new Segment(currentNode, res);
@@ -251,7 +251,7 @@ namespace PuzzleGame
 
         public virtual bool OccupyCurrentNode()
         {
-            if (currentNode == null) return false;
+            if (currentNode == null) { Debug.LogError("CURRENT NODE IS NULL " + gameObject.name); return false; }
             if (OccupyNodes)
                 currentNode.SetCurrentFollowerForced(this);
             return true;

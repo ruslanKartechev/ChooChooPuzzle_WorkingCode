@@ -117,10 +117,11 @@ namespace CommonGame.Sound
                 StartCoroutine(MusicPlaying());
             }
         }
+
         private IEnumerator MusicPlaying()
         {
             SoundSource soundSource = sourceManager.FindFreeMusicSource(SourceByName.MusicSource);
-            if (soundSource == null) yield break ;
+            if (soundSource == null) { Debug.Log("music source is zero"); yield break; }
 
             AudioSource source = soundSource.source;
             while (true)
@@ -134,14 +135,13 @@ namespace CommonGame.Sound
                 }
                 yield return null;
             }
-
-           
         }
+
         private Sound SetRandomMusic(AudioSource source)
         {
             Sound sound = sounds.music[Random.Range(0, sounds.music.Count)];
             if (sound.clip == null)
-                return null;
+            { Debug.Log("DIDn't find music clip"); return null; }
             source.clip = sound.clip;
             source.pitch = sound.pitch;
             source.volume = sound.volume * MusicVolume;

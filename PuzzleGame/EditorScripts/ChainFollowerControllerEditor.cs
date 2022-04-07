@@ -11,6 +11,8 @@ namespace PuzzleGame
             base.OnInspectorGUI();
             ChainController me = target as ChainController;
 
+            GUILayout.Space(10);
+            GUILayout.Label("PRESS THIS TO INIT TRAIN");
             if (GUILayout.Button("FullInit"))
             {
                 me.GetFollowers();
@@ -19,7 +21,7 @@ namespace PuzzleGame
                 me.SetNodes();
                 me.SetChainPositions();
             }
-
+            GUILayout.Space(10);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("GetFollowers"))
                 me.GetFollowers();
@@ -39,3 +41,29 @@ namespace PuzzleGame
         }
     }
 }
+
+
+
+//private static SplineNode TryFindHorizontal(Vector2 input, SplineNode from, List<SplineNode> nodes, List<SplineNode> exclude)
+//{
+//    List<SplineNode> clearedOptions = ClearOptions(nodes, exclude);
+//    SplineNode result = FindFromHor(input, from.transform, clearedOptions);
+//    if (result == null)
+//    {
+//        //Debug.Log("DID NOT FIND FROM CLEARED LIST");
+//        result = FindFromHor(input, from.transform, nodes);
+//    }
+//    return result;
+//}
+
+//private static SplineNode TryFindVertical(Vector2 input, SplineNode from, List<SplineNode> nodes, List<SplineNode> exclude)
+//{
+//    List<SplineNode> clearedOptions = ClearOptions(nodes, exclude);
+//    SplineNode result = FindFromVert(input, from.transform, clearedOptions);
+//    if (result == null)
+//    {
+//        //Debug.Log("DID NOT FIND FROM CLEARED LIST");
+//        result = FindFromVert(input, from.transform, nodes);
+//    }
+//    return result;
+//}

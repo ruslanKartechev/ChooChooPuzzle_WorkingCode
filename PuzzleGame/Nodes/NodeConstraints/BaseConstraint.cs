@@ -11,7 +11,7 @@ namespace PuzzleGame
         {
             SplineNode current = data.chainPositions.leadingNode; // check tester or lead
             ConstraintResult result = new ConstraintResult();
-            SplineNode next = NodeSeeker.FindNextNode(data.ScreenDirection, current, current.linkedNodes,false);
+            SplineNode next = NodeSeeker.FindNextNode(data.ScreenDirection, current, current.linkedNodes,null, false);
             if (next == null || next == current)
             {
                 result.Allowed = false;

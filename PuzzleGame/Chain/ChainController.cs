@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using CommonGame;
+using CommonGame.Sound;
 namespace PuzzleGame
 {
-
+    [DefaultExecutionOrder(100)]
     public class ChainController : MonoBehaviour, IChainMovable
     {
         [SerializeField] private ChainSettings settings;
@@ -168,17 +169,21 @@ namespace PuzzleGame
             _leading.SetAsLead();
             StartMovingLinks();
             _Effects?.ExecuteEffect(ChainEffects.Start);
+            GameManager.Instance._events.ChainSelected.Invoke(_number);
         }
 
         public void OnRelease()
         {
-            _leading?.ReleaseLead();
+            end_1.ReleaseEndNode();
+            end_2.ReleaseEndNode();
             StopAllFollowers();
             foreach (ChainFollower f in _followers)
                 f.ClearMoverHistory();
             _Effects?.ExecuteEffect(ChainEffects.Stop);
             _OnFollowerInput = null;
             _leading = null;
+            GameManager.Instance._events.ChainDeselected.Invoke(_number);
+
         }
         public void MoveByInput(Vector2 input)
         {
@@ -196,8 +201,13 @@ namespace PuzzleGame
         }
         public void SetLeadingFollower(ChainFollower follower)
         {
-            _leading?.ReleaseLead(); // old lead
-            if (follower == null) { Debug.LogError("Trying to assign lead to null");return; }
+            end_1.ReleaseEndNode();
+            end_2.ReleaseEndNode();
+            if (follower == null) 
+            {   
+                Debug.LogError("Trying to assign lead to null");
+                return;
+            }
             _leading = follower;
             _leading?.ResetFollower();
             _leading?.SetAsLead();
@@ -279,6 +289,7 @@ namespace PuzzleGame
         {
             RecordPosition();
             GameManager.Instance._events.MoveMade.Invoke();
+            GameManager.Instance._sounds.PlaySingleTime(SoundNames.TrainMove.ToString());
         }
 
         private void StopAllFollowers()
@@ -288,7 +299,7 @@ namespace PuzzleGame
         }
         public ChainFollower ResetLead()
         {
-            _leading?.ReleaseLead();
+            _leading?.ReleaseEndNode();
             if (_leading == null)
                 _leading = end_2;
             else if (_leading == end_1)
@@ -319,7 +330,7 @@ namespace PuzzleGame
             OnCurrentMoveEnd = null;
             FinishNode finish = (FinishNode)node;
             if (finish == null) return;
-            if (finish.CompareNumbers(_number))
+            if (finish.CompareNumbers(_number) == true)
             {
                 Debug.Log("<color=green> Finish Found: " + _number.ToString() + " </color>");
                 foreach (ChainFollower f in _followers)
@@ -328,12 +339,18 @@ namespace PuzzleGame
                 end_1.SuccessLightEffect();
                 end_2.SuccessLightEffect();
                 FinishMatcherController.Instance.FinishReached(_number);
+                _Effects?.ExecuteEffect(ChainEffects.Stop);
+                GameManager.Instance._events.ChainDeselected.Invoke(_number);
+                GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishCorrect.ToString());
+                TrainFinishMatcher matcher = FindObjectOfType<TrainFinishMatcher>();
+                if(matcher !=null) { matcher.OnMatched(_number); }
             }
             else
             {
                 Debug.Log("<color=red> Wrong finish " + _number.ToString() + " </color>");
                 End_1.BlockedLightEffect();
                 End_2.BlockedLightEffect();
+                GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
             }
         }
         #endregion

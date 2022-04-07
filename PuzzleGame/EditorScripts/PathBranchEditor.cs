@@ -28,7 +28,9 @@ namespace PuzzleGame
                 me.SetDepth();
 
             GUILayout.EndHorizontal();
+
             GUILayout.Space(10);
+            GUILayout.Label("Spacing Nodes equally from first or second nodes");
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("SpaceFrom_F"))
                 me.SpaceFromFirst();
@@ -36,7 +38,9 @@ namespace PuzzleGame
                 me.SpaceFromLast();
             GUILayout.EndHorizontal();
 
+
             GUILayout.Space(10);
+            GUILayout.Label("Centering Parent Pivot");
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("CenterAround_F"))
                 me.CenterAround_F();

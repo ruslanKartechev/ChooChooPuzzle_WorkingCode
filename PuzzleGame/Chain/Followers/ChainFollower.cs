@@ -36,7 +36,7 @@ namespace PuzzleGame
         {
             IsLead = true;
             _chain = chain;
-            _tester = _Controller._testerInst;
+            //_tester = _Controller._testerInst;
             if (_chain.Contains(this))
                 _chain.Remove(this);
             rotationData = new ChainFolloweRotationData(transform, _links[0].transform, false);
@@ -50,15 +50,17 @@ namespace PuzzleGame
             if(_chain.Count >1)
                 _mover.UseAdditionalModifier = true;
             onMove = SetSegment;
+            _lightsController?.OnClick();
         }
-
-        public void ReleaseLead()
+        public void ReleaseEndNode()
         {
             _lightsController?.OnRelease();
             rotationData.target = _links[0].transform;
             rotationData.forward = false;
             FirstSegmentSet = false;
+            _tester?.Hide();
         }
+
 
         public void MoveLead(Vector2 input)
         {
@@ -79,16 +81,22 @@ namespace PuzzleGame
             //_tester?.Hide();
             if (_Controller.LeadingFollower == null)
                 _Controller.ResetLead();
-            SplineNode prev = currentNode;
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
             {
                 _Controller.HandleConstraintMessage(result._message);
                 return false;
             }
+            //int i = 0;
+            //foreach(SplineNode n in result.Options)
+            //{
+            //    Debug.Log("option: " + i.ToString() + " "+ n.transform.parent.parent.name
+            //   + "  " + n.name);
+            //    i++;
+            //}
 
-            SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options);
-            if (next == null) { return false; }
+            SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options, _Controller.GetChainPosition().chainNodes);
+            if (next == null) { Debug.Log("RETURNED NULL SEEKER"); return false; }
             if (currentSegment != null && next == currentSegment.start)
             {
                 HandleBackwards();
@@ -100,22 +108,28 @@ namespace PuzzleGame
                 HandleBackwards();
                 return false;
             }
-            currentSegment = new Segment(currentNode, next);
-            onMove = MoveAlongSegment;
+
+            if(currentSegment == null)
+                currentSegment = new Segment(currentNode, next);
+
+            if (currentSegment.end != next)
+                currentSegment = new Segment(currentNode, next);
+            // onMove = MoveAlongSegment;
+
+
+            // tester
             SetTester(0f);
+            // rotation of light
             rotationData.target = next.transform;
             rotationData.forward = true;
-            if (FirstSegmentSet == false)
-            {
-                FirstSegmentSet = true;
-                _lightsController?.OnClick();
-            }
+            MoveAlongSegment(input);
+
             return true;
         }
 
         private void HandleBackwards()
         {
-            Debug.Log("Handle backwards");
+            Debug.Log("BACKWARDS");
             onMove = null;
             _mover.UseAdditionalModifier = false;
             OnDirectionChange();
@@ -127,13 +141,18 @@ namespace PuzzleGame
         protected override bool MoveAlongSegment(Vector2 input)
         {
             if (currentSegment == null) { Debug.LogError("No segment"); return false; }
-            _tester?.Show();
+            //_tester?.Show();
             float proj = Vector2.Dot(input.normalized, currentSegment.GetScreenDir().normalized);
             float percent = currentSegment.currentPercent;
             if (proj >= 0) // moving forward
                 percent += _settings.TesterSpeed * Time.deltaTime;
             else // moving backwards
+            {
+                //onMove = SetSegment;
+                //SetSegment(input);
+                //return false;
                 percent -= _settings.TesterSpeed * Time.deltaTime;
+            }
 
             Mathf.Clamp01(percent);
             currentSegment.currentPercent = percent;
@@ -158,8 +177,8 @@ namespace PuzzleGame
             else if (percent < 0)
             {
                 currentSegment = null;
-                SetSegment(input);
-                onMove = SetSegment;
+                //SetSegment(input);
+                //onMove = SetSegment;
                 return false;
             }
             SetTester(percent);
@@ -178,7 +197,7 @@ namespace PuzzleGame
             if (_tester == null) { return; }
             Vector3 start = currentSegment.start._position;
             Vector3 end = currentSegment.start.transform.position + currentSegment.Dir * percent;
-            _tester.SetPositions(start, end);
+          //  _tester.SetPositions(start, end);
         }
 
         public void BlockedLightEffect()
@@ -187,7 +206,7 @@ namespace PuzzleGame
         }
         public void SuccessLightEffect()
         {
-            _lightsController?.OnSuccess();
+            _lightsController?.OnRelease();
         }
         #endregion
 
@@ -217,6 +236,11 @@ namespace PuzzleGame
         public void OnNewNodeReached(SplineNode node)
         {
             _Controller.CheckNodeType(currentNode);
+            if (IsLead)
+            {
+                rotationData.target = _links[0].transform;
+                rotationData.forward = false;
+            }
         }
         #endregion
         public override void Prepare()

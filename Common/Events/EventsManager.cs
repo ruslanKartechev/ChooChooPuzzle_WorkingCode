@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using PuzzleGame;
 namespace CommonGame.Events
 {
     public class ArgEvent<T> : UnityEvent<T>
@@ -31,8 +32,10 @@ namespace CommonGame.Events
         public UnityEvent NextLevelCalled = new UnityEvent();
 
         public UnityEvent Impact = new UnityEvent();
-
-
         public UnityEvent MoveMade = new UnityEvent();
+
+        public ArgEvent<ChainNumber> ChainSelected = new ArgEvent<ChainNumber>();
+        public ArgEvent<ChainNumber> ChainDeselected = new ArgEvent<ChainNumber>();
+
     }
 }

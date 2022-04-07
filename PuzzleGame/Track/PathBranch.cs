@@ -15,6 +15,9 @@ namespace PuzzleGame
         [Space(8)]
         public AddType addType = AddType.last;
         [Space(8)]
+        //[Range(0f,1f)]
+        //public float SpawnScale = 1f;
+        [Space(8)]
         [Header("Settings")]
         public List<Transform> _transforms = new List<Transform>();
         [Header("NodePF")]
@@ -32,27 +35,30 @@ namespace PuzzleGame
 
         public void AddNode()
         {
+            Transform n = null;
             CleanList();
             if (addType == AddType.first)
-                AddToFirst();
+                n = AddToFirst();
             else if (addType == AddType.last)
-                AddToLast();
-
+                n = AddToLast();
+            if (n == null) { return; }
+            
         }
         private void CleanList()
         {
             _transforms.RemoveAll(t => t == null);
         }
-        private void AddToLast()
+        private Transform AddToLast()
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
+            SplineNode node = n.GetComponent<SplineNode>();
             n.parent = gameObject.transform;
             n.eulerAngles = Vector3.zero;
             if (_transforms.Count == 0)
             {
                 ReName();
                 _transforms.Add(n);
-                return;
+                return null;
             }
             Transform prev = _transforms[_transforms.Count - 1];
             if (prev == null)
@@ -61,9 +67,10 @@ namespace PuzzleGame
                 n.position = prev.position + prev.forward * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Add(n);
             ReName();
+            return n;
         }
 
-        private void AddToFirst()
+        private Transform AddToFirst()
         {
             Transform n = ((GameObject)PrefabUtility.InstantiatePrefab(NodePF)).transform;
             ReName();
@@ -74,7 +81,7 @@ namespace PuzzleGame
             {
                 _transforms.Add(n);
                 ReName();
-                return;
+                return null;
             }
             Transform prev = _transforms[0];
             if (prev == null) { _transforms.Remove(prev); }
@@ -82,6 +89,7 @@ namespace PuzzleGame
                 n.position = prev.position - prev.right * UnityEngine.Random.Range(0.1f, 0.3f);
             _transforms.Insert(0, n);
             ReName();
+            return n;
         }
 
         public void ReName()

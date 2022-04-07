@@ -6,7 +6,7 @@ namespace PuzzleGame
 {
     public static class NodeSeeker
     {
-        public static SplineNode FindNextNode(Vector2 input, SplineNode from, List<SplineNode> nodes = null, bool chooseFirst=true)
+        public static SplineNode FindNextNode(Vector2 input, SplineNode from, List<SplineNode> nodes, List<SplineNode> exclude, bool chooseFirst = true)
         {
             if (nodes == null)
                 nodes = from.linkedNodes;
@@ -18,97 +18,141 @@ namespace PuzzleGame
                 else
                     return null;
             }
-            if(Mathf.Abs(input.x) >= Mathf.Abs(input.y))
-                return FindFromHor(input, from.transform,nodes);
+
+            List<SplineNode> clearedOptions = ClearOptions(nodes, exclude);
+            SplineNode result = null;
+            if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
+            {
+                result = FindFromHor(input, from.transform, clearedOptions);
+                if (result == null)
+                {
+                    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
+                    result = FindFromHor(input, from.transform, nodes);
+                }
+            }
             else
-                return FindFromVert(input, from.transform, nodes);
+            {
+                result = FindFromVert(input, from.transform, clearedOptions);
+                if (result == null)
+                {
+                    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
+                    result = FindFromVert(input, from.transform, nodes);
+                }
+            }
+
+            if(result == null)
+            {
+                Debug.Log("<color=blue> DID not find Traditionally </color>");
+                result = FindByProjection(clearedOptions, from.transform.position,input);
+                if(result == null)
+                {
+                    result = FindByProjection(nodes, from.transform.position, input);
+                }
+            }
+
+            return result;
         }
 
         public static SplineNode FindFromVert(Vector2 input, Transform refPos, List<SplineNode> nodes)
         {
+            DebugSeeker("Finding from vert");
             List<SplineNode> _options = new List<SplineNode>();
             SplineNode next = null;
-            if (nodes == null) Debug.Log("nodes are null");
-            if (refPos == null) Debug.Log("ref pos is null");
+            if (nodes == null) DebugSeeker("nodes are null");
+            if (refPos == null) DebugSeeker("ref pos is null");
 
             if (input.y >= 0)
                 _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).y >= GetScreenPos(refPos.position).y);
             else
-                _options = nodes.FindAll(t => (t != null) 
+                _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).y <= GetScreenPos(refPos.position).y);
-          
-            if (input.x >= 0)
-                _options = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).x >= GetScreenPos(refPos.position).x);
-            else
-                _options = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).x <= GetScreenPos(refPos.position).x);
-            
-            if (_options == null) return null;
-            else if (_options.Count == 1) return _options[0];
-            else if (_options.Count == 0) return null;
 
-            //if (input.y >= 0)
-            //{
-            //    next = FindLongestDistance(res, refPos.position);
-            //}
-            //else
-            //{
-            //  next = FindShortestDistance(_options, refPos.position);
-            //}
+            FindFromOptions();
+            void FindFromOptions()
+            {
+                if (_options == null) { DebugSeeker("<color=red> Stage_1 NULL VERT </color>"); next = null; }
+                else if (_options.Count == 1) {next = _options[0]; } 
+                else if (_options.Count == 0) { Debug.Log("<color=red> Stage_1 0 VERT </color>"); next =  null; }
+                DebugSeeker("<color=red> TRYING TO FIND STAGE 2 VERT: </color>");
 
-            next = FindByProjection(_options, refPos.position, input);
+                List<SplineNode> stage_2 = new List<SplineNode>();
+                if (input.x >= 0)
+                    stage_2 = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).x >= GetScreenPos(refPos.position).x);
+                else
+                    stage_2 = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).x <= GetScreenPos(refPos.position).x);
+
+                if (stage_2.Count == 1)
+                    next = stage_2[0];
+
+                else if (stage_2 == null || stage_2.Count == 0)
+                {
+                    DebugSeeker("<color=red> STAGE 2  NOT FOUND VERT: </color>");
+                    next = FindByProjection(_options, refPos.position, input);
+                    return;
+                }
+                next = FindByProjection(stage_2, refPos.position, input);
+            }
+
             return next;
         }
 
         public static SplineNode FindFromHor(Vector2 input, Transform refPos, List<SplineNode> nodes)
         {
+            DebugSeeker("Finding from hor");
             List<SplineNode> _options = new List<SplineNode>();
             SplineNode next = null;
-            if (nodes == null) Debug.Log("nodes are null");
-            if (refPos == null) Debug.Log("ref pos is null");
-            //foreach(SplineNode n in nodes)
-            //{
-            //    if (n == null) continue;
-            //    Debug.Log("options: !!: " + n.transform.parent.parent.name
-            //   + "  " + n.name);
-            //}
-
+            if (nodes == null) DebugSeeker("nodes are null");
+            if (refPos == null) DebugSeeker("ref pos is null");
             if (input.x >= 0)
                 _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).x >= GetScreenPos(refPos.position).x);
             else
-                _options = nodes.FindAll(t => (t != null) 
+                _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).x <= GetScreenPos(refPos.position).x);
-            if (input.y >= 0)
+
+            FindFromOptions(); // will determine next;
+
+
+
+            void FindFromOptions()
             {
-                _options = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).y >= GetScreenPos(refPos.position).y);
-            }
-            else
-            {
-                _options = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).y <= GetScreenPos(refPos.position).y);
+                if (_options == null) { DebugSeeker("<color=red> Stage_1 NULL HOR </color>"); next = null; }
+                else if (_options.Count == 1) { next = _options[0]; }
+                else if (_options.Count == 0) { DebugSeeker("<color=red> Stage_1 NULL HOR </color>"); next = null; }
+                DebugSeeker("<color=red> TRYING TO FIND STAGE 2 HOR: </color>");
+                List<SplineNode> stage_2 = new List<SplineNode>();
+                if (input.y >= 0)
+                {
+                    stage_2 = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).y >= GetScreenPos(refPos.position).y);
+                }
+                else
+                {
+                    stage_2 = _options.FindAll(t => (t != null) && GetScreenPos(t.transform.position).y <= GetScreenPos(refPos.position).y);
+                }
+
+                if (stage_2.Count == 1)
+                    next = stage_2[0];
+
+                else if (stage_2 == null || stage_2.Count == 0)
+                {
+                    DebugSeeker("<color=red> STAGE 2  NOT FOUND HOR: </color>");
+                    next = FindByProjection(_options, refPos.position, input);
+                    return;
+                }
+                next = FindByProjection(stage_2, refPos.position, input);
             }
 
-            if (_options == null) return null;
-            else if (_options.Count == 1) return _options[0];
-            else if (_options.Count == 0) return null;
 
-            //if(input.x >= 0)
-            //{
-            //    next = FindLongestDistance(res,refPos.position);
-            //}
-            //else
-            //{
-            //    next = FindShortestDistance(res,refPos.position);
-            //}
-            next = FindByProjection(_options, refPos.position, input);
             return next;
         }
-
         private static SplineNode FindByProjection(List<SplineNode> options, Vector3 refPos, Vector2 input)
         {
-            SplineNode res = options[0];
+  
             if (options.Count == 0)
-                return res;
+                return null;
+
+            SplineNode res = options[0];
             Vector2 screenRef = GetScreenPos(refPos);
             Vector2 dir = GetScreenPos(res._position) - screenRef;
             float largest = Vector2.Dot(input, dir);
@@ -117,7 +161,7 @@ namespace PuzzleGame
                 if (n == null) continue;
                 dir = (GetScreenPos(n._position) - screenRef);
                 float proj = Vector2.Dot(input, dir);
-                if(proj >= largest)
+                if (proj >= largest)
                 {
                     largest = proj;
                     res = n;
@@ -127,7 +171,18 @@ namespace PuzzleGame
         }
 
 
+        public static List<SplineNode> ClearOptions(List<SplineNode> options, List<SplineNode> exclude)
+        {
+            if (exclude == null || exclude.Count == 0) { return options; }
+            foreach (SplineNode n in exclude)
+            {
+                if (n == null) continue;
+                if (options.Contains(n))
+                    options.Remove(n);
+            }
 
+            return options;
+        }
 
 
         private static SplineNode FindLongestDistance(List<SplineNode> options, Vector3 refPos)
@@ -152,11 +207,12 @@ namespace PuzzleGame
             SplineNode res = options[0];
             Vector2 screenRef = GetScreenPos(refPos);
             float shortest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
-            foreach(SplineNode n in options)
+            foreach (SplineNode n in options)
             {
                 if (n == null) continue;
                 float dist = (GetScreenPos(n._position) - screenRef).magnitude;
-                if ( dist<= shortest){
+                if (dist <= shortest)
+                {
                     res = n;
                     shortest = dist;
                 }
@@ -167,6 +223,11 @@ namespace PuzzleGame
         private static Vector2 GetScreenPos(Vector3 worldPos)
         {
             return (Vector2)Camera.main.WorldToScreenPoint(worldPos);
+        }
+
+        public static void DebugSeeker(string message)
+        {
+           // Debug.Log(message);
         }
     }
 }
