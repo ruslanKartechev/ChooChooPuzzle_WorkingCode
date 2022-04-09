@@ -19,6 +19,13 @@ namespace PuzzleGame
         [Range(0f, 1f)]
         public float LeadModifier = 1.2f;
         public float NodeMovingTime = 0.3f;
-      
+        [Header("Angle to push")]
+        public float PushAngleThreshold = 95;
+        [Space(10)]
+        public LayerMask castMask;
+        public string LeadTag;
+        [Space(10)]
+        public float bouncingPercent = 0.7f;
+        public float bounceTime = 0.3f;
     }
 }

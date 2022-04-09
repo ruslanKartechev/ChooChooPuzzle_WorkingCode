@@ -31,6 +31,15 @@ namespace PuzzleGame
             onMove = SetSegment;
 
         }
+        private void Update()
+        {
+            if(currentNode != null)
+            {
+                if (currentNode.currentFollower == null)
+                    currentNode.SetCurrentFollowerForced(this);
+            }
+        }
+
         #region LeadingFollower
         public void SetupLead(List<IChainFollower> chain)
         {
@@ -43,6 +52,7 @@ namespace PuzzleGame
             StartRotation();
             if (_lightsController == null) Debug.Log("<color=red> Lights are not assigned </color>");
             _lightsController.OnStart();
+            gameObject.tag = _settings.LeadTag;
         }
 
         public void SetAsLead()
@@ -76,6 +86,16 @@ namespace PuzzleGame
                 _chain[i].MoveToFollow(_history[_history.Count - i - 2]);
             }
         }
+        public void Bounce(Vector3 target, float percent, float time, ChainFollower caller)
+        {
+            _mover.Bounce(target, percent, time);
+            ChainFollower f = _links.Find(t => t != caller);
+            if(f != null)
+            {
+                f.Bounce(currentNode._position, percent, time, this);
+            }
+        }
+
         protected override bool SetSegment(Vector2 input)
         {
             //_tester?.Hide();
@@ -87,6 +107,7 @@ namespace PuzzleGame
                 _Controller.HandleConstraintMessage(result._message);
                 return false;
             }
+            #region DebugOptions
             //int i = 0;
             //foreach(SplineNode n in result.Options)
             //{
@@ -94,6 +115,7 @@ namespace PuzzleGame
             //   + "  " + n.name);
             //    i++;
             //}
+            #endregion
 
             SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options, _Controller.GetChainPosition().chainNodes);
             if (next == null) { Debug.Log("RETURNED NULL SEEKER"); return false; }
@@ -102,34 +124,24 @@ namespace PuzzleGame
                 HandleBackwards();
                 return false;
             }
-
             if (_Controller.IsChainOccupied(next))
             {
                 HandleBackwards();
                 return false;
             }
-
             if(currentSegment == null)
                 currentSegment = new Segment(currentNode, next);
-
             if (currentSegment.end != next)
                 currentSegment = new Segment(currentNode, next);
-            // onMove = MoveAlongSegment;
-
-
-            // tester
-            SetTester(0f);
-            // rotation of light
             rotationData.target = next.transform;
             rotationData.forward = true;
-            MoveAlongSegment(input);
-
+            MoveOnSegment(input);
             return true;
         }
 
         private void HandleBackwards()
         {
-            Debug.Log("BACKWARDS");
+            //Debug.Log("Handling backwards");
             onMove = null;
             _mover.UseAdditionalModifier = false;
             OnDirectionChange();
@@ -138,32 +150,24 @@ namespace PuzzleGame
             _Controller.ResetLead();
         }
 
-        protected override bool MoveAlongSegment(Vector2 input)
+        protected override bool MoveOnSegment(Vector2 input)
         {
             if (currentSegment == null) { Debug.LogError("No segment"); return false; }
-            //_tester?.Show();
             float proj = Vector2.Dot(input.normalized, currentSegment.GetScreenDir().normalized);
             float percent = currentSegment.currentPercent;
-            if (proj >= 0) // moving forward
-                percent += _settings.TesterSpeed * Time.deltaTime;
-            else // moving backwards
-            {
-                //onMove = SetSegment;
-                //SetSegment(input);
-                //return false;
-                percent -= _settings.TesterSpeed * Time.deltaTime;
-            }
-
+            if (proj >= 0) { percent += _settings.TesterSpeed * Time.deltaTime; }
+            else { percent -= _settings.TesterSpeed * Time.deltaTime; }
             Mathf.Clamp01(percent);
             currentSegment.currentPercent = percent;
             if (percent >= _settings.NodeSnapPercent)
             {
                 if (_mover.IsBusy == true || _links[0].IsMoving()) { /*Debug.Log("_mover is busy");*/ return false; }
-                if (CheckBusy(currentSegment.end) == false) 
+                if (CheckNextNode(currentSegment.end) == false)
                 {
-                    _Controller.HandleConstraintMessage(ConstraintMessages.Blocked);
-                    onMove = null; 
-                    return false; 
+                    onMove = null;
+                    currentSegment = null;
+                    _Controller.ResetLead();
+                    return false;
                 }
                 _mover.AddNode(currentSegment.end); // moving self
                 AddToHistory(currentSegment.end);
@@ -172,18 +176,60 @@ namespace PuzzleGame
 
                 _Controller.OnMoveMade();
                 onMove = null;
-                //_tester?.Hide();
             }
-            else if (percent < 0)
-            {
-                currentSegment = null;
-                //SetSegment(input);
-                //onMove = SetSegment;
-                return false;
-            }
-            SetTester(percent);
+            else if (percent < 0) { currentSegment = null; return false; }
             return true;
         }
+        private bool CheckNextNode(SplineNode node)
+        {
+            if (_Controller.IsChainOccupied(node))
+            {
+                HandleBackwards();
+                return false;
+            }
+            if (node.currentFollower != null)
+            {
+                string message = node.PushFromNode(this).message;
+                return HandlePushnodeMessage(message);
+            }
+            else
+            {
+                Debug.Log("RayCasting forward");
+                Ray ray = new Ray();
+                ray.origin = transform.position; ray.direction = transform.position - _links[0].transform.position;
+                if (Physics.Raycast(ray, out RaycastHit hit, 0.5f, _settings.castMask))
+                {
+                    //Debug.Log(hit.collider.gameObject.tag + "    NAME:" + hit.collider.gameObject.name);
+                    if (hit.collider.gameObject.tag == _settings.LeadTag)
+                    {
+                        Debug.Log("HIT ANOTHER LEAD");
+                        ChainFollower follower = hit.collider.GetComponent<ChainFollower>();
+                        string message = follower.PushFromNode(this).message;
+                        return HandlePushnodeMessage(message);
+                    }
+                }
+            }
+
+            return true;
+        }
+        private bool HandlePushnodeMessage(string message)
+        {
+            if (message == NodePushMessage.ContactBlock.ToString())
+            {
+                _Controller.HandleConstraintMessage(ConstraintMessages.Blocked);
+                _Controller.HandleConstraintMessage(ConstraintMessages.CloseContanctBlock);
+                return false;
+            }
+            else if (message == NodePushMessage.SideBlock.ToString())
+            {
+                _Controller.HandleConstraintMessage(ConstraintMessages.Blocked);
+                Bounce(currentSegment.end._position, _settings.bouncingPercent, _settings.bounceTime, this);
+                return false;
+            }
+            else
+                return true;
+        }
+
         // Called by the lead, when direction is changed;
         private void ChangeDirectionAsLead()
         {
@@ -191,15 +237,6 @@ namespace PuzzleGame
             foreach (IChainFollower f in _chain)
                 f.OnDirectionChange();
         }
-
-        private void SetTester(float percent)
-        {
-            if (_tester == null) { return; }
-            Vector3 start = currentSegment.start._position;
-            Vector3 end = currentSegment.start.transform.position + currentSegment.Dir * percent;
-          //  _tester.SetPositions(start, end);
-        }
-
         public void BlockedLightEffect()
         {
             _lightsController?.OnCollision();
@@ -271,19 +308,7 @@ namespace PuzzleGame
             _history.Add(node);
         }
 
-        private bool CheckBusy(SplineNode node)
-        {
-            if (_Controller.IsChainOccupied(node))
-            {
-                HandleBackwards();
-                return false;
-            }
-            if (node.currentFollower != null)
-            {
-                if (node.PushFromNode(this) == false) { return false; }
-            }
-            return true;
-        }
+
 
         #region Linking
         public void AddLink(ChainFollower link)
@@ -298,36 +323,91 @@ namespace PuzzleGame
         #endregion
 
         #region Pushing
-        public override bool PushFromNode(ISplineFollower pusher)
+        public override Vector3 GetSegmentVector()
         {
-            bool allow = false;
+            return currentSegment.end._position - currentSegment.start._position;
+        }
+        public override NodePushResult PushFromNode(ISplineFollower pusher)
+        {
+            NodePushResult result = new NodePushResult();
+            result.success = false;
+            result.message = NodePushMessage.PushFail.ToString();
             if (_Controller.IsEndFollower(this) == false)
             {
-                if(_Controller.End_1.currentNode.currentFollower == pusher)
-                {
-                    _Controller.SetLeadingFollower(_Controller.End_2);
-                    allow = _Controller.End_2.PushForward();
-
-                } else if (_Controller.End_2.currentNode.currentFollower == pusher)
-                {
-                    _Controller.SetLeadingFollower(_Controller.End_1);
-                    allow =  _Controller.End_1.PushForward();
-                }
-                if (allow == true)
-                    _Controller.StartMovingLinks();
-                return false;
+                result = TryPushSide(pusher);
+                return result;
             }
             _Controller.SetLeadingFollower(this); // myself
+
             ChainFollower otherLead = _Controller.ResetLead(); // other end
             if (otherLead.currentNode.currentFollower != pusher) // if other end is not occupied by the same follower
             {
-                allow = true; // allow to occupy my node
+                result.success = false;
+                result.message = NodePushMessage.PushFail.ToString();
+                if (currentNode.HasAngleConstraint == true)
+                {
+                    Vector3 other = pusher.GetSegmentVector();
+                    Vector3 mine = currentNode._position - _links[0].transform.position;
+                    float angle = AngleHandler.GetAngle(other, mine, Vector3.up);
+                    Debug.Log("Angle: " + angle);
+                    if (angle <= _settings.PushAngleThreshold)
+                    {
+                        //result = TryPushOtherSide();
+                        result.success = false;
+                        result.message = NodePushMessage.ContactBlock.ToString() ;
+                    }
+                }
             }
             else
-                allow = PushForward(); // try to push
-            if (allow == true)
+            {
+                result = TryPushForward();
+            }
+
+            if (result.success == true)
+            {
                 _Controller.StartMovingLinks();
-            return allow;
+            }
+
+            return result;
+        }
+        private NodePushResult TryPushForward()
+        {
+            NodePushResult result = new NodePushResult();
+            result.success = PushForward(); // try to push
+            if (result.success == false)
+            { result.message = NodePushMessage.ContactBlock.ToString(); Debug.Log("Push fail"); }
+            else
+            { result.message = NodePushMessage.PushSucess.ToString(); Debug.Log("Push success"); }
+            return result;
+        }
+
+        private NodePushResult TryPushSide(ISplineFollower pusher)
+        {
+            NodePushResult result = new NodePushResult();
+            result.success = false;
+            result.message = NodePushMessage.SideBlock.ToString();
+            if (_Controller.End_1.currentNode.currentFollower == pusher)
+            {
+                _Controller.SetLeadingFollower(_Controller.End_2);
+                result.success = _Controller.End_2.PushForward();
+                result.message = NodePushMessage.ContactBlock.ToString();
+            }
+            else if (_Controller.End_2.currentNode.currentFollower == pusher)
+            {
+                _Controller.SetLeadingFollower(_Controller.End_1);
+                result.success = _Controller.End_1.PushForward();
+                result.message = NodePushMessage.ContactBlock.ToString();
+            }
+            else
+            {
+                result.success = false; result.message = NodePushMessage.SideBlock.ToString();
+            }
+            if (result.success == true)
+            {
+                _Controller.StartMovingLinks();
+                result.message = NodePushMessage.PushSucess.ToString();
+            }
+            return result;
         }
 
         public bool PushForward()
@@ -343,23 +423,31 @@ namespace PuzzleGame
             _Controller.SetLeadingFollower(null);
             return true;
         }
-#endregion
+        #endregion
 
-        public void ClearMoverHistory()
-        {
-            _mover.ClearHistory();
-        }
 
         public SplineNode FindFreeNode()
         {
+            Vector2 input = AngleHandler.GetScreenVector(_links[0].transform.position, transform.position);
+            ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
+            if (result.Allowed == false || result.Options == null)
+            {
+                _Controller.HandleConstraintMessage(result._message);
+                return null;
+            }
             SplineNode res = null;
-            foreach(SplineNode n in currentNode.linkedNodes)
+            foreach (SplineNode n in result.Options /*currentNode.linkedNodes*/)
             {
                 if (n == null) continue;
                 if (n.IsOccupied == false)
                     res = n;
             }
             return res;
+        }
+
+        public void ClearMoverHistory()
+        {
+            _mover.ClearHistory();
         }
 
         public bool MoveViaMover(SplineNode node)

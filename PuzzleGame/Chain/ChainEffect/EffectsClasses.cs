@@ -9,7 +9,7 @@ namespace PuzzleGame
     public class ChainEffectsSettings
     {
         public ChainEffect_Shaking shaking;
-        public ChainEffect_Squeezing squeezing;
+        public ChainEffect_Lean leaning;
         public ChainEffect_Start start;
         public ChainEffect_Stop stop;
     }
@@ -34,11 +34,12 @@ namespace PuzzleGame
 
     }
     [System.Serializable]
-    public class ChainEffect_Squeezing
+    public class ChainEffect_Lean
     {
-        public float SqueezeTime = 0.5f;
-        public float ReleaseTime = 0.5f;
-        public bool SqueezeWhole = false;
+        public float LeanTime = 0.25f;
+        public float RelapseTime = 0.15f;
+        [Header("In percent of the length of the segment")]
+        public float Amount = 0.2f;
 
     }
 }

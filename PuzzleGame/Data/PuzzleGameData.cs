@@ -12,10 +12,9 @@ namespace PuzzleGame
 
     public struct ConstraintMessages
     {
-        public const string OK = "Movement allowed";
         public const string WrongAngle = "Wrong Angle";
         public const string Blocked = "Blocked";
-        public const string End = "No options";
+        public const string CloseContanctBlock = "Close Contanct Block";
 
     }
 }

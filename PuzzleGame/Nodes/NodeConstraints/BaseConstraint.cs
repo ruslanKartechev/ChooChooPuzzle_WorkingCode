@@ -16,14 +16,12 @@ namespace PuzzleGame
             {
                 result.Allowed = false;
                 result.Options = null;
-                result._message = ConstraintMessages.End;
             }
             else
             {
                 result.Allowed = true;
                 result.Options = new List<SplineNode>();
                 result.Options.Add(next);
-                result._message = ConstraintMessages.OK;
             }
 
             return result;

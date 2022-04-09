@@ -3,6 +3,7 @@ using UnityEngine;
 namespace PuzzleGame
 {
 
+#if UNITY_EDITOR
     [CustomEditor(typeof(ChainSegmentManager))]
     public class ChainSegmentManagerEditor : Editor
     {
@@ -19,8 +20,9 @@ namespace PuzzleGame
             if (GUILayout.Button("SetPositions"))
                 me.SetPositions();
             GUILayout.EndHorizontal();
+            serializedObject.Update();
             serializedObject.ApplyModifiedProperties();
         }
-
     }
+#endif
 }

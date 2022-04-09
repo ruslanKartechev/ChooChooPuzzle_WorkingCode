@@ -9,14 +9,15 @@ namespace PuzzleGame
     public class SplineNode : MonoBehaviour
     {
         [SerializeField] protected NodeType _type;
-        public NodeType Type { get { return _type; } }
-
         [SerializeField] private bool HasAngleConstr;
         [SerializeField] private AngleConstraint AngleConst;
         public List<SplineNode> linkedNodes;
         private List<IConstrained> mConstraints = new List<IConstrained>();
-        public Vector3 _position { get { return transform.position; } }
+        private ISplineFollower _currentFollower = null;
         protected Action OnOccupied;
+
+        public NodeType Type { get { return _type; } }
+        public Vector3 _position { get { return transform.position; } }
         public bool IsOccupied
         {
             get
@@ -28,9 +29,9 @@ namespace PuzzleGame
             }
         }
         public ISplineFollower currentFollower { get { return _currentFollower; } }
-        private ISplineFollower _currentFollower = null;
+      
         public List<IConstrained> _Constraints { get { return mConstraints; } }
-
+        public bool HasAngleConstraint { get { return HasAngleConstr; } }
 
         private void Start()
         {
@@ -64,22 +65,24 @@ namespace PuzzleGame
         }
 
 
-        public bool PushFromNode(ISplineFollower pusher)
+        public NodePushResult PushFromNode(ISplineFollower pusher)
         {
-            bool allow = true;
+            NodePushResult result = new NodePushResult();
+            result.success = true;
+            result.message = NodePushMessage.PushSucess.ToString();
             if (currentFollower != null)
             {
-                allow = currentFollower.PushFromNode(pusher);
+                result = currentFollower.PushFromNode(pusher);
             }
             else
                 Debug.Log("no current follower");
-            
-            return allow;
+
+            return result;
         }
-        
-        public bool SetCurrentFollower(ISplineFollower follower) 
+
+        public bool SetCurrentFollower(ISplineFollower follower)
         {
-            if(_currentFollower == null)
+            if (_currentFollower == null)
             {
                 OnOccupied?.Invoke();
                 _currentFollower = follower;

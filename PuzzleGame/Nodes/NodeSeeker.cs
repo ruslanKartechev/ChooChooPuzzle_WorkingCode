@@ -42,7 +42,7 @@ namespace PuzzleGame
 
             if(result == null)
             {
-                Debug.Log("<color=blue> DID not find Traditionally </color>");
+                //Debug.Log("<color=blue> DID not find Traditionally </color>");
                 result = FindByProjection(clearedOptions, from.transform.position,input);
                 if(result == null)
                 {
@@ -73,7 +73,7 @@ namespace PuzzleGame
             {
                 if (_options == null) { DebugSeeker("<color=red> Stage_1 NULL VERT </color>"); next = null; }
                 else if (_options.Count == 1) {next = _options[0]; } 
-                else if (_options.Count == 0) { Debug.Log("<color=red> Stage_1 0 VERT </color>"); next =  null; }
+                else if (_options.Count == 0) { DebugSeeker("<color=red> Stage_1 0 VERT </color>"); next =  null; }
                 DebugSeeker("<color=red> TRYING TO FIND STAGE 2 VERT: </color>");
 
                 List<SplineNode> stage_2 = new List<SplineNode>();
@@ -96,7 +96,6 @@ namespace PuzzleGame
 
             return next;
         }
-
         public static SplineNode FindFromHor(Vector2 input, Transform refPos, List<SplineNode> nodes)
         {
             DebugSeeker("Finding from hor");
@@ -169,8 +168,6 @@ namespace PuzzleGame
             }
             return res;
         }
-
-
         public static List<SplineNode> ClearOptions(List<SplineNode> options, List<SplineNode> exclude)
         {
             if (exclude == null || exclude.Count == 0) { return options; }
@@ -185,40 +182,40 @@ namespace PuzzleGame
         }
 
 
-        private static SplineNode FindLongestDistance(List<SplineNode> options, Vector3 refPos)
-        {
-            SplineNode res = options[0];
-            Vector2 screenRef = GetScreenPos(refPos);
-            float longest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
-            foreach (SplineNode n in options)
-            {
-                if (n == null) continue;
-                float dist = (GetScreenPos(n._position) - screenRef).magnitude;
-                if (dist >= longest)
-                {
-                    res = n;
-                    longest = dist;
-                }
-            }
-            return res;
-        }
-        private static SplineNode FindShortestDistance(List<SplineNode> options, Vector3 refPos)
-        {
-            SplineNode res = options[0];
-            Vector2 screenRef = GetScreenPos(refPos);
-            float shortest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
-            foreach (SplineNode n in options)
-            {
-                if (n == null) continue;
-                float dist = (GetScreenPos(n._position) - screenRef).magnitude;
-                if (dist <= shortest)
-                {
-                    res = n;
-                    shortest = dist;
-                }
-            }
-            return res;
-        }
+        //private static SplineNode FindLongestDistance(List<SplineNode> options, Vector3 refPos)
+        //{
+        //    SplineNode res = options[0];
+        //    Vector2 screenRef = GetScreenPos(refPos);
+        //    float longest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
+        //    foreach (SplineNode n in options)
+        //    {
+        //        if (n == null) continue;
+        //        float dist = (GetScreenPos(n._position) - screenRef).magnitude;
+        //        if (dist >= longest)
+        //        {
+        //            res = n;
+        //            longest = dist;
+        //        }
+        //    }
+        //    return res;
+        //}
+        //private static SplineNode FindShortestDistance(List<SplineNode> options, Vector3 refPos)
+        //{
+        //    SplineNode res = options[0];
+        //    Vector2 screenRef = GetScreenPos(refPos);
+        //    float shortest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
+        //    foreach (SplineNode n in options)
+        //    {
+        //        if (n == null) continue;
+        //        float dist = (GetScreenPos(n._position) - screenRef).magnitude;
+        //        if (dist <= shortest)
+        //        {
+        //            res = n;
+        //            shortest = dist;
+        //        }
+        //    }
+        //    return res;
+        //}
 
         private static Vector2 GetScreenPos(Vector3 worldPos)
         {

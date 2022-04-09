@@ -27,7 +27,6 @@ namespace PuzzleGame
         public ChainFollower End_1 { get { return end_1; } }
         public ChainFollower End_2 { get { return end_2; } }
 
-
         public ChainConstaintHandler _ConstraintHandler;
         private ChainEffectsController _Effects;
         private PositionRecorder _recorder;
@@ -56,6 +55,7 @@ namespace PuzzleGame
                 _testerInst.Hide();
             }
             InitChain();
+            StartMovingLinks();
         }
 
         #region Init
@@ -167,8 +167,7 @@ namespace PuzzleGame
                 _leading = end_2;
             _leading.ResetFollower();
             _leading.SetAsLead();
-            StartMovingLinks();
-            _Effects?.ExecuteEffect(ChainEffects.Start);
+            _Effects?.ExecuteEffect(ChainEffects.Start, GetChainPosition());
             GameManager.Instance._events.ChainSelected.Invoke(_number);
         }
 
@@ -179,7 +178,7 @@ namespace PuzzleGame
             StopAllFollowers();
             foreach (ChainFollower f in _followers)
                 f.ClearMoverHistory();
-            _Effects?.ExecuteEffect(ChainEffects.Stop);
+            _Effects?.ExecuteEffect(ChainEffects.Stop, GetChainPosition()) ;
             _OnFollowerInput = null;
             _leading = null;
             GameManager.Instance._events.ChainDeselected.Invoke(_number);
@@ -204,8 +203,8 @@ namespace PuzzleGame
             end_1.ReleaseEndNode();
             end_2.ReleaseEndNode();
             if (follower == null) 
-            {   
-                Debug.LogError("Trying to assign lead to null");
+            {
+                _leading = null;
                 return;
             }
             _leading = follower;
@@ -276,6 +275,8 @@ namespace PuzzleGame
         public ChainPositionInfo GetChainPosition()
         {
             ChainPositionInfo info = new ChainPositionInfo();
+            if (_leading == null)
+                return null;
             info.leadingNode = _leading.GetActualNode();
             //info.testerPosition = _pathTester.currentNode;
             List<SplineNode> positions = new List<SplineNode>(_followers.Count);
@@ -339,7 +340,7 @@ namespace PuzzleGame
                 end_1.SuccessLightEffect();
                 end_2.SuccessLightEffect();
                 FinishMatcherController.Instance.FinishReached(_number);
-                _Effects?.ExecuteEffect(ChainEffects.Stop);
+                _Effects?.ExecuteEffect(ChainEffects.Stop, GetChainPosition());
                 GameManager.Instance._events.ChainDeselected.Invoke(_number);
                 GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishCorrect.ToString());
                 TrainFinishMatcher matcher = FindObjectOfType<TrainFinishMatcher>();
@@ -361,11 +362,18 @@ namespace PuzzleGame
             switch (message)
             {
                 case ConstraintMessages.WrongAngle:
-                    _Effects.ExecuteEffect(ChainEffects.Shake);
+                    _Effects.ExecuteEffect(ChainEffects.LeanForward, GetChainPosition());
                     break;
                 case ConstraintMessages.Blocked:
                     end_1.BlockedLightEffect();
                     end_2.BlockedLightEffect();
+                    GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
+                    break;
+                case ConstraintMessages.CloseContanctBlock:
+                    //_Effects.ExecuteEffect(ChainEffects.LeanForward, GetChainPosition());
+                    _Effects.ExecuteEffect(ChainEffects.Shake, GetChainPosition());
+                    GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
+
                     break;
             }
         }

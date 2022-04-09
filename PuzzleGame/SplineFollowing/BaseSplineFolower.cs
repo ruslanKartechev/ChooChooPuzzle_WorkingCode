@@ -24,9 +24,9 @@ namespace PuzzleGame
         {
             return transform;
         }
-        public virtual bool PushFromNode(ISplineFollower pusher)
+        public virtual NodePushResult PushFromNode(ISplineFollower pusher)
         {
-            return true;
+            return new NodePushResult();
         }
         public virtual bool CanBePushed()
         {
@@ -100,7 +100,7 @@ namespace PuzzleGame
             if (res != null)
             {
                 currentSegment = new Segment(currentNode, res);
-                onMove = MoveAlongSegment;
+                onMove = MoveOnSegment;
                 return true;
             }
             else
@@ -110,7 +110,7 @@ namespace PuzzleGame
             }
         }
 
-        protected virtual bool MoveAlongSegment(Vector2 input)
+        protected virtual bool MoveOnSegment(Vector2 input)
         {
             if (currentSegment == null) return false;
             float proj = Vector2.Dot(input, (Vector2)currentSegment.Dir);
@@ -256,8 +256,7 @@ namespace PuzzleGame
                 currentNode.SetCurrentFollowerForced(this);
             return true;
         }
-
-
+        public virtual Vector3 GetSegmentVector() { return Vector3.zero; }
         #region FindingNodes
 
 
@@ -273,6 +272,7 @@ namespace PuzzleGame
             Debug.Log("<color=blue>" + message + "</color>");
         }
 
+ 
     }
 
 }

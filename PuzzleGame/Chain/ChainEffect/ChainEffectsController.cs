@@ -6,108 +6,60 @@ using UnityEngine;
 
 namespace PuzzleGame
 {
-    public enum ChainEffects { Start,Stop,Shake,Break}
+    public enum ChainEffects { Start,Stop,Shake,Break, LeanForward}
     public class ChainEffectsController
     {
         private ChainEffectsSettings _Settings;
-        private List<ChainSegmentInfo> _Links;
-        private List<ChainLinksPositioner> _Positioners;
+        private List<ChainSegmentData> _Links;
+        private ChainPositionInfo _ChainPositions;
         public ChainEffectsController(ChainEffectsSettings settings, List<ChainSegmentManager> managers)
         {
             _Settings = settings;
-            List<ChainSegmentInfo> segmentsLinks = new List<ChainSegmentInfo>();
-            List<ChainLinksPositioner> positioners = new List<ChainLinksPositioner>();
+            List<ChainSegmentData> segmentsLinks = new List<ChainSegmentData>();
             foreach (ChainSegmentManager manager in managers)
             {
                 if (manager != null)
                 {
                     segmentsLinks.Add(manager.GetChainInfo());
-                    positioners.Add(manager._Positioner);
                 }
             }
             _Links = segmentsLinks;
-            _Positioners = positioners;
-
+            
         }
-        public ChainEffectsController(ChainEffectsSettings settings, List<ChainSegmentInfo> Info, List<ChainLinksPositioner> positioners)
+
+        public ChainEffectsController(ChainEffectsSettings settings, List<ChainSegmentData> Info)
         {
             _Settings = settings;
             _Links = Info;
-            _Positioners = positioners;
         }
-        public void ExecuteEffect(ChainEffects effect)
+
+        public void ExecuteEffect(ChainEffects effect, ChainPositionInfo currentPositions)
         {
             switch (effect)
             {
                 case ChainEffects.Shake:
-                    EffectCommandExecutioner ex = new ShakeCommandExecutioner(_Links, _Settings.shaking,_Positioners);
-                    ex.ExecuteEffect();
-
+                    EffectCommandExecutioner shake = new ShakeCommandExecutioner(_Links, _Settings.shaking);
+                    shake.ExecuteEffect();
                     break;
-                case ChainEffects.Start:
+                case ChainEffects.LeanForward:
+                    EffectCommandExecutioner lean = new LeanCommanExecutioner(_Links, _Settings.leaning,_ChainPositions);
+                    lean.ExecuteEffect();
                     break;
-                case ChainEffects.Stop:
-                    break;
-                case ChainEffects.Break:
-                    break;
+                //case ChainEffects.Start:
+                //    break;
+                //case ChainEffects.Stop:
+                //    break;
+                //case ChainEffects.Break:
+                //    break;
 
             }
-        }
-    }
-    
-
-    public class EffectCommandExecutioner
-    {
-        public virtual void ExecuteEffect()
-        {
-
+            _ChainPositions = currentPositions;
         }
     }
 
-    public class ShakeCommandExecutioner: EffectCommandExecutioner
+    public abstract class EffectCommandExecutioner
     {
-        protected List<ChainSegmentInfo> segments;
-        protected ChainEffect_Shaking _settings;
-        protected List<ChainLinksPositioner> _positioners;
-        public ShakeCommandExecutioner(List<ChainSegmentInfo> info, ChainEffect_Shaking settings, List<ChainLinksPositioner> positioners)
-        {
-            segments = info;
-            _settings = settings;
-            _positioners = positioners;
-        }
-        public override void ExecuteEffect()
-        {
-            Shake();
-        }
-
-        private async void Shake()
-        {
-            float elapsed = 0f;
-            //foreach (ChainLinksPositioner pos in _positioners)
-            //    pos.PauseMovement();
-            while (elapsed <= _settings.ShakeTime)
-            {
-                foreach (ChainSegmentInfo seg in segments)
-                {
-                    foreach (ChainLink link in seg._links)
-                    {
-                        link.Components._model.transform.localPosition = UnityEngine.Random.onUnitSphere*_settings.ShakeMagnitude;
-                    }
-                }
-                elapsed += Time.deltaTime;
-                await Task.Yield();
-            }
-            foreach (ChainSegmentInfo seg in segments)
-            {
-                foreach (ChainLink link in seg._links)
-                {
-                    link.Components._model.transform.localPosition = Vector3.zero;
-                }
-            }
-            //foreach (ChainLinksPositioner pos in _positioners)
-            //    pos.ResumeMovement();
-
-        }
+        public abstract void ExecuteEffect();
     }
 
 

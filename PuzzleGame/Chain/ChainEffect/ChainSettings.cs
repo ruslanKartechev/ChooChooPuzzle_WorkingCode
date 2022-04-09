@@ -7,7 +7,9 @@ namespace PuzzleGame
     public class ChainSettings : ScriptableObject
     {
         public FollowerSettings followerSettings;
+        [Space(15)]
         public ChainEffectsSettings ChainEffects;
+
     }
 
 

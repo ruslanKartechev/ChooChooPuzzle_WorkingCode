@@ -48,7 +48,6 @@ namespace PuzzleGame
             }
             else
             {
-                DebugMessage("<color=red>" + "Already contain the node" +"</color>");
                 return false;
             }
         }
@@ -104,6 +103,7 @@ namespace PuzzleGame
         private IEnumerator NodeMover(SplineNode node, Action<SplineNode> onEnd = null)
         {
             if (node == null) { Debug.LogError("Null node passed"); yield break; }
+            StopBouncing();
             Vector3 start = transform.position;
             Vector3 end = node._position;
             float elapsed = 0f;
@@ -112,13 +112,14 @@ namespace PuzzleGame
             HandleAcceleration();
             while (elapsed <= time)
             {
-                transform.position = Vector3.Slerp(start, end, elapsed / time);
+                transform.position = Vector3.Lerp(start, end, elapsed / time);
                 elapsed += Time.deltaTime * currentMod;
                 yield return null;
             }
             transform.position = end;
             NodeReachedNotifier?.Invoke(node);
         }
+
 
         private IEnumerator AccelerationHandler(float totalTime, float startVal, float endVal)
         {
@@ -131,6 +132,45 @@ namespace PuzzleGame
                 yield return null;
             }
         }
+
+        private Coroutine _bouncing;
+        public void Bounce(Vector3 target,  float percent, float time)
+        {
+            if (_bouncing == null)
+                _bouncing = StartCoroutine(Bouncing(target, percent, time));
+            else
+                Debug.Log("Already bouncing");
+        }
+        private void StopBouncing()
+        {
+            if (_bouncing != null) StopCoroutine(_bouncing);
+            _bouncing = null;
+        }
+
+        private IEnumerator Bouncing(Vector3 to, float percent, float time)
+        {
+            float elapsed = 0f;
+            Vector3 start = transform.position;
+            Vector3 target = Vector3.Lerp(start, to, percent);
+            while(elapsed <= time / 2)
+            {
+
+                transform.position = Vector3.Lerp(start, target, elapsed*2/time);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            elapsed = 0f;
+            while (elapsed <= time / 2)
+            {
+
+                transform.position = Vector3.Lerp( target, start,elapsed * 2 / time);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            _bouncing = null;
+        }
+
+
         
         private void HandleAcceleration()
         {
@@ -145,21 +185,6 @@ namespace PuzzleGame
             }
         }
 
-
-        private void DebugMessage(string message)
-        {
-            if (gameObject.name.Contains("Right"))
-            {
-                Debug.Log("Right " +  message);
-            } else if (gameObject.name.Contains("Left"))
-            {
-              //  Debug.Log("Left  " + message);
-            }
-            else
-            {
-               // Debug.Log("Middle: " + message);
-            }
-        }
 
         public void ClearHistory()
         {

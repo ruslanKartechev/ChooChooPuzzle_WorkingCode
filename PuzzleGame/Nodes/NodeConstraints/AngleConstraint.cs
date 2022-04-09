@@ -45,17 +45,12 @@ namespace PuzzleGame
                 res.Options = null;
                 res._message = ConstraintMessages.WrongAngle;
             }
-            else
-            {
-                res._message = ConstraintMessages.OK;
-                //Debug.Log("options: " + res.Options.Count);
-            }
             return res;
-
         }
+
         private bool CheckAngle(Vector3 _inner, Vector3 _outer)
         {
-            float angle = GetAngle(_inner, _outer, Vector3.forward);
+            float angle = AngleHandler.GetAngle(_inner, _outer, Vector3.forward);
             //Debug.Log("<color=green>Angle: </color>" + angle);
             if (angle == 0 || angle == 180)
             {
@@ -71,7 +66,13 @@ namespace PuzzleGame
             }
         }
 
-        public float GetAngle(Vector3 v1, Vector3 v2, Vector3 axis)
+
+
+    }
+
+    public static class AngleHandler
+    {
+        public static float GetAngle(Vector3 v1, Vector3 v2, Vector3 axis)
         {
             // angle in [0,180]
             float angle = Vector3.Angle(v1, v2);
@@ -82,5 +83,14 @@ namespace PuzzleGame
             return angle;
         }
 
+        public static Vector3 GetScreenVector(Vector3 origin_world, Vector3  end_world)
+        {
+            return Camera.main.WorldToScreenPoint(end_world) - Camera.main.WorldToScreenPoint(origin_world);
+        }
+
     }
+
+
+
+
 }
