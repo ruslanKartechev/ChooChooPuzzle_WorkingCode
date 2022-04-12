@@ -18,7 +18,11 @@ namespace PuzzleGame
                 me.GetLinks();
             }
             if (GUILayout.Button("SetPositions"))
+            {
+                me.GetLinks();
                 me.SetPositions();
+            }
+               
             GUILayout.EndHorizontal();
             serializedObject.Update();
             serializedObject.ApplyModifiedProperties();

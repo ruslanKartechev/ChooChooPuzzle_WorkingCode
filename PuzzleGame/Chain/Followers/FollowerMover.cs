@@ -23,6 +23,8 @@ namespace PuzzleGame
         public Action<SplineNode> StartNotifier;
         public Action<SplineNode> NodeReachedNotifier;
         public Action StopNotifier;
+        public Action OnBounceHit = null;
+
         public bool IsBusy { get { return _isBusy; } }
         public bool DoAccelerateOnStart = false;
         public bool UseAdditionalModifier = false;
@@ -160,6 +162,7 @@ namespace PuzzleGame
                 yield return null;
             }
             elapsed = 0f;
+            OnBounceHit?.Invoke();
             while (elapsed <= time / 2)
             {
 

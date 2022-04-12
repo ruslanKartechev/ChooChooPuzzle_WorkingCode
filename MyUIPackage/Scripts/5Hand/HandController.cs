@@ -5,18 +5,21 @@ namespace CommonGame.UI
 {
     public class HandController : MonoBehaviour
     {
-        
+
+        public bool DoUseHand = true;
+        [Space(13)]
         [SerializeField] private HandManager _manager;
         private Coroutine inputCheck;
-
-
+        
+        private void Awake()
+        {
+            if (_manager) _manager = FindObjectOfType<HandManager>();
+        }
         private void Start()
         {
             _manager.HideHand();
-            //if (GameManager.Instance.data.EditorUIMode)
-            //{
-            //    StartInputCheck();
-            //}
+            if (DoUseHand)
+                StartInputCheck();
         }
         public void StopInputCheck()
         {
@@ -52,6 +55,10 @@ namespace CommonGame.UI
                 }
                 yield return null;
             }
+        }
+        private void OnDestroy()
+        {
+            StopInputCheck();
         }
 
     }

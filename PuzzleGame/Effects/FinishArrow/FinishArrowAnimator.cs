@@ -3,26 +3,35 @@ using UnityEngine;
 
 namespace PuzzleGame
 {
-    [System.Serializable]
-    public class FinishArrowAnimator
+
+    public abstract class FinishAnimator
     {
-        public string IdleState;
-        public string ActiveState;
-        public string paramName;
+        public abstract void Init();
+        public abstract void Activate();
+        public abstract void Deactivate();
+    }
+
+  
+
+
+
+
+    [System.Serializable]
+    public class FinishArrowAnimator : FinishAnimator
+    {
         public Animator _anim;
-        public void Init()
+        public override void Init()
         {
-            Deactivate();
+            _anim.Play("Idle");
         }
-        public void Activate()
+        public override void Activate()
         {
-            // _anim.SetBool(paramName, true);
-            _anim.Play(ActiveState,0,0);
+            _anim.Play("Active");
         }
-        public void Deactivate()
+        public override void Deactivate()
         {
-            _anim.Play(IdleState, 0, 0);
-            // _anim.SetBool(paramName, false);
+            _anim.Play("Idle");
+
         }
 
     }

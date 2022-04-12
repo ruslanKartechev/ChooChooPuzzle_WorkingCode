@@ -10,11 +10,21 @@ namespace PuzzleGame
     {
         public ChainEffect_Shaking shaking;
         public ChainEffect_Lean leaning;
+        public ChainEffect_Jump jumping;
+
         public ChainEffect_Start start;
         public ChainEffect_Stop stop;
     }
 
+    [System.Serializable]
+    public class ChainEffect_Jump
+    {
+        public Transform Target;
+        [Space(10)]
+        public float JumpSpeed;
+        public float BezierHeight;
 
+    }
 
 
     [System.Serializable]

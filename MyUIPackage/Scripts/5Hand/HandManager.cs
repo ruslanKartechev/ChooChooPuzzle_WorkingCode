@@ -7,9 +7,13 @@ namespace CommonGame.UI
     public class HandManager : MonoBehaviour
     {
         [SerializeField] private Transform Hand;
+        [Space(10)]
+        [SerializeField]  private float MaxSpeed = 1f;
+        [Space(10)]
         [SerializeField] private float ScalingTime = 0.5f;
         [SerializeField] private float NormalScale = 1f;
         [SerializeField] private float PressedScale = 0.8f;
+        [Space(10)]
         private Action onScaleChange = null;
         private Coroutine pointerFollowing = null;
         public void Show()
@@ -69,27 +73,24 @@ namespace CommonGame.UI
             Vector2 newPos = virtualPosition;
             while (true)
             {
-    //            if (Input.GetMouseButton(0))
-    //            {
-    //                Hand.transform.position = Input.mousePosition;
-    //            }
+                if (Input.GetMouseButton(0))
+                {
+                    Hand.transform.position = Input.mousePosition;
+                }
 
-    //            newPos = Input.mousePosition;
-    //            Vector2 d = (newPos - virtualPosition);
-    //            Vector2 delta = (newPos - virtualPosition).normalized;
-    //            float distance = (newPos - virtualPosition).magnitude;
-    //            if (distance >= 1)
-    //            {
-    //                Vector2 move = delta
-    //* GameManager.Instance.data.currentInst.Data.HandMaxSpeed
-    //* Time.deltaTime * 100f;
-    //                if (distance < move.magnitude)
-    //                    move = d;
-    //                virtualPosition += move;
-
-    //            }
-    //            SetHandPos(virtualPosition);
-    //            oldPos = newPos;
+                newPos = Input.mousePosition;
+                Vector2 d = (newPos - virtualPosition);
+                Vector2 delta = (newPos - virtualPosition).normalized;
+                float distance = (newPos - virtualPosition).magnitude;
+                if (distance >= 1)
+                {
+                    Vector2 move = delta * MaxSpeed * Time.deltaTime * 100f;
+                    if (distance < move.magnitude)
+                        move = d;
+                    virtualPosition += move;
+                }
+                SetHandPos(virtualPosition);
+                oldPos = newPos;
                 yield return new WaitForFixedUpdate(); 
             }
         }

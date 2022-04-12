@@ -44,6 +44,10 @@ namespace PuzzleGame
             if(GUILayout.Button("Spawn New Links From List"))
             {
                 me.SetNewModels();
+                me.GetAllModels();
+                me.InitModels();
+                me.ScaleModels();
+                me.ApplyRotation();
             }
             serializedObject.Update();
             serializedObject.ApplyModifiedProperties();

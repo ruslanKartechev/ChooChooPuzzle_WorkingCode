@@ -17,11 +17,6 @@ namespace PuzzleGame
         {
             if (_positioner == null) _positioner = GetComponent<ChainLinksPositioner>();
         }
-        public Action GetCommandAction(string command)
-        {
-            return null;
-        }
-
         public void InitSegment(ChainController controller)
         {
             InitCuttableLinks();
@@ -34,10 +29,6 @@ namespace PuzzleGame
                 link.InitOnCutReciver(OnLinkCutStart);
         }
 
-        public void OnLinkCutStart(ChainLink caller)
-        {
-            _controller.Cut(this, _Links.IndexOf(caller));
-        }
 
         public void StartChainMovement()
         {
@@ -54,7 +45,14 @@ namespace PuzzleGame
         {
             return new ChainSegmentData(_Links, pivot_1, pivot_2, _positioner);
         }
+        
 
+
+
+        public void OnLinkCutStart(ChainLink caller)
+        {
+            _controller.Cut(this, _Links.IndexOf(caller));
+        }
         public void DropAllLinks()
         {
             for (int i = 0; i < _Links.Count; i++)
@@ -80,6 +78,8 @@ namespace PuzzleGame
             }
         }
 
+
+        // From Editor
         public void GetLinks()
         {
             _Links = new List<ChainLink>();

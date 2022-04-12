@@ -8,6 +8,10 @@ namespace PuzzleGame
     public class SegmentsModelsManager : MonoBehaviour
     {
         public float Scale = 1f;
+        [Space(5)]
+        public bool UseScale3 = false;
+        public Vector3 Scale3 = new Vector3();
+        [Space(10)]
         public Vector3 EulerAngles;
         private List<Transform> models = new List<Transform>();
         public SegmentModels ModelsList;
@@ -71,7 +75,10 @@ namespace PuzzleGame
         {
             foreach (Transform t in models)
             {
-                t.localScale = Vector3.one * Scale;
+                if (UseScale3 == false)
+                    t.localScale = Vector3.one * Scale;
+                else
+                    t.localScale = Scale3;
             }
         }
         public void ApplyRotation()

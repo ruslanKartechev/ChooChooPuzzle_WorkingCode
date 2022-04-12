@@ -8,7 +8,7 @@ namespace PuzzleGame
     {
 
 
-        private ChainController _Controller;
+        private ChainFollowersController _Controller;
         private List<ChainFollower> _links = new List<ChainFollower>();
         private FollowerMover _mover;
         private ChainFolloweRotationData rotationData;
@@ -23,7 +23,7 @@ namespace PuzzleGame
 
         private bool _enabledFollower = true;
         public bool EnabledFollower { get { return _enabledFollower; } }
-        public void Init(ChainController controller, FollowerSettings settings)
+        public void Init(ChainFollowersController controller, FollowerSettings settings)
         {
             _Controller = controller;
             InitSettings(settings);
@@ -50,8 +50,8 @@ namespace PuzzleGame
                 _chain.Remove(this);
             rotationData = new ChainFolloweRotationData(transform, _links[0].transform, false);
             StartRotation();
-            if (_lightsController == null) Debug.Log("<color=red> Lights are not assigned </color>");
-            _lightsController.OnStart();
+            //if (_lightsController == null) Debug.Log("<color=red> Lights are not assigned </color>");
+            //_lightsController.OnStart();
             gameObject.tag = _settings.LeadTag;
         }
 
@@ -60,11 +60,11 @@ namespace PuzzleGame
             if(_chain.Count >1)
                 _mover.UseAdditionalModifier = true;
             onMove = SetSegment;
-            _lightsController?.OnClick();
+            //_lightsController?.OnClick();
         }
         public void ReleaseEndNode()
         {
-            _lightsController?.OnRelease();
+            //_lightsController?.OnRelease();
             rotationData.target = _links[0].transform;
             rotationData.forward = false;
             FirstSegmentSet = false;
@@ -194,15 +194,12 @@ namespace PuzzleGame
             }
             else
             {
-                Debug.Log("RayCasting forward");
                 Ray ray = new Ray();
                 ray.origin = transform.position; ray.direction = transform.position - _links[0].transform.position;
                 if (Physics.Raycast(ray, out RaycastHit hit, 0.5f, _settings.castMask))
                 {
-                    //Debug.Log(hit.collider.gameObject.tag + "    NAME:" + hit.collider.gameObject.name);
                     if (hit.collider.gameObject.tag == _settings.LeadTag)
                     {
-                        Debug.Log("HIT ANOTHER LEAD");
                         ChainFollower follower = hit.collider.GetComponent<ChainFollower>();
                         string message = follower.PushFromNode(this).message;
                         return HandlePushnodeMessage(message);
@@ -214,21 +211,22 @@ namespace PuzzleGame
         }
         private bool HandlePushnodeMessage(string message)
         {
-            if (message == NodePushMessage.ContactBlock.ToString())
+            if (message == NodePushMessage.ContactBlock.ToString() || message == NodePushMessage.SideBlock.ToString())
             {
-                _Controller.HandleConstraintMessage(ConstraintMessages.Blocked);
-                _Controller.HandleConstraintMessage(ConstraintMessages.CloseContanctBlock);
-                return false;
-            }
-            else if (message == NodePushMessage.SideBlock.ToString())
-            {
-                _Controller.HandleConstraintMessage(ConstraintMessages.Blocked);
                 Bounce(currentSegment.end._position, _settings.bouncingPercent, _settings.bounceTime, this);
+                _mover.OnBounceHit = OnBounceHit;
                 return false;
             }
             else
                 return true;
         }
+
+        private void OnBounceHit()
+        {
+            _Controller.HandleConstraintMessage(ConstraintMessages.CloseContanctBlock);
+            _mover.OnBounceHit = null;
+        }
+
 
         // Called by the lead, when direction is changed;
         private void ChangeDirectionAsLead()
@@ -239,11 +237,11 @@ namespace PuzzleGame
         }
         public void BlockedLightEffect()
         {
-            _lightsController?.OnCollision();
+            //_lightsController?.OnCollision();
         }
         public void SuccessLightEffect()
         {
-            _lightsController?.OnRelease();
+            //_lightsController?.OnRelease();
         }
         #endregion
 
@@ -272,7 +270,7 @@ namespace PuzzleGame
         }
         public void OnNewNodeReached(SplineNode node)
         {
-            _Controller.CheckNodeType(currentNode);
+            _Controller.OnLeadNodeSet(currentNode);
             if (IsLead)
             {
                 rotationData.target = _links[0].transform;
@@ -362,12 +360,6 @@ namespace PuzzleGame
             {
                 result = TryPushForward();
             }
-
-            if (result.success == true)
-            {
-                _Controller.StartMovingLinks();
-            }
-
             return result;
         }
         private NodePushResult TryPushForward()
@@ -404,7 +396,6 @@ namespace PuzzleGame
             }
             if (result.success == true)
             {
-                _Controller.StartMovingLinks();
                 result.message = NodePushMessage.PushSucess.ToString();
             }
             return result;
@@ -478,6 +469,7 @@ namespace PuzzleGame
             StopNodeSnapping();
             _enabledFollower = false;
             _tester?.Hide();
+            currentNode.ReleaseNode();
         }
 
         #region Movable

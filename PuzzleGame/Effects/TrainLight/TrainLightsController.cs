@@ -10,7 +10,7 @@ namespace PuzzleGame
         [SerializeField] private LightEffectExecutioner _executioner;
         private void Start()
         {
-            InitAll();
+           // InitAll();
         }
         public void InitAll()
         {
@@ -43,7 +43,6 @@ namespace PuzzleGame
         }
         public void OnStart()
         {
-            //_executioner.ExecuteEffect(TrainLightEffects.Disable);
             _executioner.ExecuteEffect(TrainLightEffects.LongBlink);
         }
 
@@ -51,8 +50,6 @@ namespace PuzzleGame
         {
             _executioner.ExecuteEffect(TrainLightEffects.Enable);
             _executioner.ExecuteEffect(TrainLightEffects.Success);
-            //_executioner.ExecuteEffect(TrainLightEffects.BlinkMild);
-
         }
         public void OnCollision()
         {
