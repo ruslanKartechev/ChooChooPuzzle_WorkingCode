@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 namespace PuzzleGame
 {
-    public class ChainFollower : BaseSplineFolower, IChainFollower
+    public class ChainFollowerStep : BaseSplineFolower //, IChainFollower
     {
         private ChainFollowersController _Controller;
         private List<ChainFollower> _links = new List<ChainFollower>();
@@ -19,7 +19,6 @@ namespace PuzzleGame
 
         private bool _enabledFollower = true;
         public bool EnabledFollower { get { return _enabledFollower; } }
-
         public void Init(ChainFollowersController controller, FollowerSettings settings)
         {
             _Controller = controller;
@@ -30,7 +29,7 @@ namespace PuzzleGame
         }
         private void Update()
         {
-            if (currentNode != null)
+            if(currentNode != null)
             {
                 if (currentNode.currentFollower == null)
                     currentNode.SetCurrentFollowerForced(this);
@@ -42,8 +41,8 @@ namespace PuzzleGame
         {
             IsLead = true;
             _chain = chain;
-            if (_chain.Contains(this))
-                _chain.Remove(this);
+         //   if (_chain.Contains(this))
+           //     _chain.Remove(this);
             rotationData = new ChainFolloweRotationData(transform, _links[0].transform, false);
             StartRotation();
             gameObject.tag = _settings.LeadTag;
@@ -51,7 +50,7 @@ namespace PuzzleGame
 
         public void SetAsLead()
         {
-            if (_chain.Count > 1)
+            if(_chain.Count >1)
                 _mover.UseAdditionalModifier = true;
             onMove = SetSegment;
         }
@@ -75,16 +74,16 @@ namespace PuzzleGame
         {
             for (int i = 0; i < _chain.Count; i++)
             {
-                _chain[i].MoveToFollow(_history[_history.Count - i - 2]);
+               // _chain[i].MoveToFollow(_history[_history.Count - i - 2]);
             }
         }
         public void Bounce(Vector3 target, float percent, float time, ChainFollower caller)
         {
             _mover.Bounce(target, percent, time);
             ChainFollower f = _links.Find(t => t != caller);
-            if (f != null)
+            if(f != null)
             {
-                f.Bounce(currentNode._position, percent, time, this);
+             //   f.Bounce(currentNode._position, percent, time, this);
             }
         }
 
@@ -98,7 +97,17 @@ namespace PuzzleGame
                 _Controller.HandleConstraintMessage(result._message);
                 return false;
             }
-            SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options, null/*_Controller.GetChainPosition().chainNodes*/);
+            #region DebugOptions
+            //int i = 0;
+            //foreach(SplineNode n in result.Options)
+            //{
+            //    Debug.Log("option: " + i.ToString() + " "+ n.transform.parent.parent.name
+            //   + "  " + n.name);
+            //    i++;
+            //}
+            #endregion
+
+            SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options, _Controller.GetChainPosition().chainNodes);
             if (next == null) { Debug.Log("RETURNED NULL SEEKER"); return false; }
             if (currentSegment != null && next == currentSegment.start)
             {
@@ -107,11 +116,10 @@ namespace PuzzleGame
             }
             if (_Controller.IsChainOccupied(next))
             {
-                //Debug.Log("CHAIN OCCUPIED, " + gameObject.name);
                 HandleBackwards();
                 return false;
             }
-            if (currentSegment == null)
+            if(currentSegment == null)
                 currentSegment = new Segment(currentNode, next);
             if (currentSegment.end != next)
                 currentSegment = new Segment(currentNode, next);
@@ -128,6 +136,7 @@ namespace PuzzleGame
             _mover.UseAdditionalModifier = false;
             OnDirectionChange();
             ChangeDirectionAsLead();
+            _tester?.Hide();
             _Controller.ResetLead();
         }
 
@@ -194,7 +203,7 @@ namespace PuzzleGame
         {
             if (message == NodePushMessage.ContactBlock.ToString() || message == NodePushMessage.SideBlock.ToString())
             {
-                Bounce(currentSegment.end._position, _settings.bouncingPercent, _settings.bounceTime, this);
+               // Bounce(currentSegment.end._position, _settings.bouncingPercent, _settings.bounceTime, this);
                 _mover.OnBounceHit = OnBounceHit;
                 return false;
             }
@@ -231,7 +240,7 @@ namespace PuzzleGame
 
         private void InitMover()
         {
-            if (_settings == null) { Debug.Log("settings are not assigned"); return; }
+            if(_settings == null) { Debug.Log("settings are not assigned");return; }
             _mover = gameObject.AddComponent<FollowerMover>();
             _mover.Init(_settings);
             _mover.StartNotifier = OnMoverStart;
@@ -272,10 +281,10 @@ namespace PuzzleGame
         }
         public void ResetFollower()
         {
-            currentSegment = null;
-            onMove = SetSegment;
-            if (IsLead)
-                _history = _Controller.GetChainNodes(this);
+            //currentSegment = null;
+            //onMove = SetSegment;
+            //if(IsLead)
+            //    _history = _Controller.GetChainNodes(this);
         }
         public void MoveToFollow(SplineNode node)
         {
@@ -309,38 +318,38 @@ namespace PuzzleGame
         public override NodePushResult PushFromNode(ISplineFollower pusher)
         {
             NodePushResult result = new NodePushResult();
-            result.success = false;
-            result.message = NodePushMessage.PushFail.ToString();
-            if (_Controller.IsEndFollower(this) == false)
-            {
-                result = TryPushSide(pusher);
-                return result;
-            }
-            _Controller.SetLeadingFollower(this); // myself
+            //result.success = false;
+            //result.message = NodePushMessage.PushFail.ToString();
+            //if (_Controller.IsEndFollower(this) == false)
+            //{
+            //    result = TryPushSide(pusher);
+            //    return result;
+            //}
+            //_Controller.SetLeadingFollower(this); // myself
 
-            ChainFollower otherLead = _Controller.ResetLead(); // other end
-            if (otherLead.currentNode.currentFollower != pusher) // if other end is not occupied by the same follower
-            {
-                result.success = false;
-                result.message = NodePushMessage.PushFail.ToString();
-                if (currentNode.HasAngleConstraint == true)
-                {
-                    Vector3 other = pusher.GetSegmentVector();
-                    Vector3 mine = currentNode._position - _links[0].transform.position;
-                    float angle = AngleHandler.GetAngle(other, mine, Vector3.up);
-                    Debug.Log("Angle: " + angle);
-                    if (angle <= _settings.PushAngleThreshold)
-                    {
-                        //result = TryPushOtherSide();
-                        result.success = false;
-                        result.message = NodePushMessage.ContactBlock.ToString();
-                    }
-                }
-            }
-            else
-            {
-                result = TryPushForward();
-            }
+            //ChainFollower otherLead = _Controller.ResetLead(); // other end
+            //if (otherLead.currentNode.currentFollower != pusher) // if other end is not occupied by the same follower
+            //{
+            //    result.success = false;
+            //    result.message = NodePushMessage.PushFail.ToString();
+            //    if (currentNode.HasAngleConstraint == true)
+            //    {
+            //        Vector3 other = pusher.GetSegmentVector();
+            //        Vector3 mine = currentNode._position - _links[0].transform.position;
+            //        float angle = AngleHandler.GetAngle(other, mine, Vector3.up);
+            //        Debug.Log("Angle: " + angle);
+            //        if (angle <= _settings.PushAngleThreshold)
+            //        {
+            //            //result = TryPushOtherSide();
+            //            result.success = false;
+            //            result.message = NodePushMessage.ContactBlock.ToString() ;
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    result = TryPushForward();
+            //}
             return result;
         }
         private NodePushResult TryPushForward()
@@ -384,7 +393,7 @@ namespace PuzzleGame
 
         public bool PushForward()
         {
-            _Controller.SetLeadingFollower(this);
+            //_Controller.SetLeadingFollower(this);
             SplineNode node = FindFreeNode();
             if (node == null) return false;
 
@@ -392,7 +401,7 @@ namespace PuzzleGame
             AddToHistory(node);
             ResetCurrentNode(node, true);
             MoveOthers();
-            //_Controller.SetLeadingFollower(null);
+            _Controller.SetLeadingFollower(null);
             return true;
         }
         #endregion
@@ -433,7 +442,7 @@ namespace PuzzleGame
             onMove = SetSegment;
             _mover.DisableAcceleration();
             _mover.UseAdditionalModifier = false;
-            _mover.StopMoving();
+            // _mover.StopMoving();
         }
 
         public GameObject GetGo() { return gameObject; }
@@ -463,7 +472,7 @@ namespace PuzzleGame
         public override void OnMoveStart()
         {
             if (_enabledFollower == false) return;
-            _Controller.OnFollowerClick?.Invoke(this);
+      //      _Controller.OnFollowerClick?.Invoke(this);
         }
 
         public override void OnMoveEnd()
@@ -472,7 +481,6 @@ namespace PuzzleGame
             _Controller.OnFollowerRelease?.Invoke();
         }
         #endregion
-
 
         #region Rotation
         public class ChainFolloweRotationData

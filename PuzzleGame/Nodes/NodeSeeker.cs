@@ -23,21 +23,23 @@ namespace PuzzleGame
             SplineNode result = null;
             if (Mathf.Abs(input.x) >= Mathf.Abs(input.y))
             {
-                result = FindFromHor(input, from.transform, clearedOptions);
-                if (result == null)
-                {
-                    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
-                    result = FindFromHor(input, from.transform, nodes);
-                }
+                result = FindFromHor(input, from.transform, nodes);
+                //result = FindFromHor(input, from.transform, clearedOptions);
+                //if (result == null)
+                //{
+                //    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
+                //    result = FindFromHor(input, from.transform, nodes);
+                //}
             }
             else
             {
-                result = FindFromVert(input, from.transform, clearedOptions);
-                if (result == null)
-                {
-                    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
-                    result = FindFromVert(input, from.transform, nodes);
-                }
+                result = FindFromVert(input, from.transform, nodes);
+                //result = FindFromVert(input, from.transform, clearedOptions);
+                //if (result == null)
+                //{
+                //    DebugSeeker("DID NOT FIND FROM CLEARED LIST");
+                //    result = FindFromVert(input, from.transform, nodes);
+                //}
             }
 
             if(result == null)
@@ -60,7 +62,7 @@ namespace PuzzleGame
             SplineNode next = null;
             if (nodes == null) DebugSeeker("nodes are null");
             if (refPos == null) DebugSeeker("ref pos is null");
-
+            if (nodes.Count == 1) { DebugSeeker("only one res return"); Debug.Log("NODE: " + nodes[0].gameObject.name); return nodes[0]; }
             if (input.y >= 0)
                 _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).y >= GetScreenPos(refPos.position).y);
@@ -103,6 +105,8 @@ namespace PuzzleGame
             SplineNode next = null;
             if (nodes == null) DebugSeeker("nodes are null");
             if (refPos == null) DebugSeeker("ref pos is null");
+            if (nodes.Count == 1) { DebugSeeker("only one res return HOR"); Debug.Log("NODE: " + nodes[0].gameObject.name); DebugSeeker("only one res return"); return nodes[0]; }
+
             if (input.x >= 0)
                 _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).x >= GetScreenPos(refPos.position).x);
@@ -111,8 +115,6 @@ namespace PuzzleGame
                 && GetScreenPos(t.transform.position).x <= GetScreenPos(refPos.position).x);
 
             FindFromOptions(); // will determine next;
-
-
 
             void FindFromOptions()
             {
@@ -180,42 +182,6 @@ namespace PuzzleGame
 
             return options;
         }
-
-
-        //private static SplineNode FindLongestDistance(List<SplineNode> options, Vector3 refPos)
-        //{
-        //    SplineNode res = options[0];
-        //    Vector2 screenRef = GetScreenPos(refPos);
-        //    float longest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
-        //    foreach (SplineNode n in options)
-        //    {
-        //        if (n == null) continue;
-        //        float dist = (GetScreenPos(n._position) - screenRef).magnitude;
-        //        if (dist >= longest)
-        //        {
-        //            res = n;
-        //            longest = dist;
-        //        }
-        //    }
-        //    return res;
-        //}
-        //private static SplineNode FindShortestDistance(List<SplineNode> options, Vector3 refPos)
-        //{
-        //    SplineNode res = options[0];
-        //    Vector2 screenRef = GetScreenPos(refPos);
-        //    float shortest = (GetScreenPos(options[0]._position) - screenRef).magnitude;
-        //    foreach (SplineNode n in options)
-        //    {
-        //        if (n == null) continue;
-        //        float dist = (GetScreenPos(n._position) - screenRef).magnitude;
-        //        if (dist <= shortest)
-        //        {
-        //            res = n;
-        //            shortest = dist;
-        //        }
-        //    }
-        //    return res;
-        //}
 
         private static Vector2 GetScreenPos(Vector3 worldPos)
         {

@@ -9,9 +9,10 @@ namespace CommonGame.UI
         public StartPanel startPanel;
         public LevelCompletePanel levelEndPanel;
         public ProgressPanel progressPanel;
+        public GameObject MainCanvas;
         public void Init()
         {
-
+            MainCanvas.gameObject.SetActive(true);
             if (startPanel == null)
                 startPanel = GetComponent<StartPanel>();
             if (levelEndPanel == null)

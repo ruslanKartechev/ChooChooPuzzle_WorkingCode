@@ -8,9 +8,20 @@ namespace PuzzleGame
     public class SegmentsModelsManager : MonoBehaviour
     {
         public float Scale = 1f;
+        [Space(5)]
+        public bool UseScale3 = false;
+        public Vector3 Scale3 = new Vector3();
+        [Space(10)]
         public Vector3 EulerAngles;
         private List<Transform> models = new List<Transform>();
-        public bool UseSingleModel = false;
+        public SegmentModels ModelsList;
+
+        private void Start()
+        {
+            GetAllModels();
+            InitModels();
+        }
+
         public void GetAllModels()
         {
             models = new List<Transform>();
@@ -23,42 +34,51 @@ namespace PuzzleGame
                 if (models.Contains(model) == false)
                 {
                     models.Add(model);
-                    if(model.gameObject.name.Contains("LinkModel") == false)
-                        model.gameObject.name += "_" + "LinkModel_" + i.ToString();
+                    if(model.gameObject.name.Contains("LinkMod") == false)
+                        model.gameObject.name += "_" + "LinkMod" + i.ToString();
                 }
             }
 
         }
         public void InitModels()
         {
-            foreach(Transform t in models)
+            foreach(Transform model in models)
             {
-                if (t != null)
+                if (model != null)
                 {
-                    Rigidbody rb = t.GetComponent<Rigidbody>();
-                    if (rb == null)
-                        rb = t.gameObject.AddComponent<Rigidbody>();
-                    rb.isKinematic = true;
-                    Collider c = t.GetComponent<Collider>();
-                    if (c == null)
-                        c = t.gameObject.AddComponent<BoxCollider>();
-                    c.isTrigger = true;
-                    IChainLink link = t.GetComponentInParent<IChainLink>();
-                    if (link != null)
-                        link.InitComponents(new ChainLinkComponents(t.gameObject,rb, c));
+                    InitModel(model.gameObject);
                 }
                 else
                 {
-                    models.Remove(t);
+                    models.Remove(model);
                 }
             }
         }
+
+        private void InitModel(GameObject model)
+        {
+            Rigidbody rb = model.GetComponent<Rigidbody>();
+            if (rb == null)
+                rb = model.gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            Collider c = model.GetComponent<Collider>();
+            if (c == null)
+                c = model.gameObject.AddComponent<BoxCollider>();
+            c.isTrigger = true;
+            IChainLink link = model.GetComponentInParent<IChainLink>();
+            if (link != null)
+                link.InitComponents(new ChainLinkComponents(model.gameObject, rb, c));
+        }
+
 
         public void ScaleModels()
         {
             foreach (Transform t in models)
             {
-                t.localScale = Vector3.one * Scale;
+                if (UseScale3 == false)
+                    t.localScale = Vector3.one * Scale;
+                else
+                    t.localScale = Scale3;
             }
         }
         public void ApplyRotation()
@@ -70,43 +90,55 @@ namespace PuzzleGame
         }
 
 
-    }
-
-
-    [CustomEditor(typeof(SegmentsModelsManager))]
-    public class SegmentsModelsManagerEditor : Editor
-    {
-        public override void OnInspectorGUI()
+        public void SetNewModels()
         {
-            base.OnInspectorGUI();
-            SegmentsModelsManager me = target as SegmentsModelsManager;
+            if (ModelsList == null) { Debug.LogError("Models not assigned");return; }
+            if(ModelsList.ModelsInOrder.Count == 0) { Debug.LogError("Models list is 0"); return; }
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("GetModels"))
-                me.GetAllModels();
-            if (GUILayout.Button("InitModels"))
-            {
-                me.GetAllModels();
-                me.InitModels();
-            }
-            GUILayout.EndHorizontal();
+            models = new List<Transform>();
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Scale"))
+            for (int i=0; i< transform.childCount; i++)
             {
-                me.GetAllModels();
-                me.ScaleModels();
+                DestroyImmediate(transform.GetChild(i).gameObject);
             }
-              
-            if (GUILayout.Button("ApplyRotation"))
+            List<GameObject> spawnedLinks = new List<GameObject>();
+            for (int i = 0; i < ModelsList.ModelsInOrder.Count; i++)
             {
-                me.GetAllModels();
-                me.ApplyRotation();
+                GameObject link = SpawnLink("Link " + i.ToString(), ModelsList.ModelsInOrder[i]);
+                spawnedLinks.Add(link);
             }
-              
-            GUILayout.EndHorizontal();
-            serializedObject.ApplyModifiedProperties();
+            PlaceNewLinks(spawnedLinks);
+
+        }
+        private void PlaceNewLinks(List<GameObject> spawnedLinks)
+        {
+            float spacing = 0.1f;
+            if (spawnedLinks == null || spawnedLinks.Count == 0) { return; }
+            for(int i=0; i< spawnedLinks.Count; i++)
+            {
+                spawnedLinks[i].transform.localPosition = Vector3.zero + transform.forward * spacing * i / transform.localScale.x;
+            }
         }
 
+
+        private GameObject SpawnLink(string name, GameObject _model)
+        {
+            if (_model == null) { Debug.LogError("Null model given");return null; }
+            GameObject link = new GameObject(name);
+            link.transform.parent = transform;
+            link.transform.localPosition = Vector3.zero;
+            ChainLink l = link.AddComponent<ChainLink>();
+            GameObject mod = PrefabUtility.InstantiatePrefab(_model) as GameObject;
+            mod.transform.parent = link.transform;
+            mod.transform.localEulerAngles = EulerAngles;
+            mod.transform.localPosition = Vector3.zero;
+            models.Add(mod.transform);
+            InitModel(mod);
+
+            return link;
+        }
     }
+
+
+
 }

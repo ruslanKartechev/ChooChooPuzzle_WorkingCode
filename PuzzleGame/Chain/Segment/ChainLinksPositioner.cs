@@ -12,13 +12,15 @@ namespace PuzzleGame
         [SerializeField] private bool LookAtDirection = true;
 
         private bool IsPaused = false;
-
-        public void StartMovement(ChainSegmentInfo info, Transform end_1, Transform end_2)
+        [Header("Vertical spacing of the links")]
+        [SerializeField] private float VerticalSpacing = 0.2f;
+        [SerializeField] private List<float> CustomSpacing = new List<float>();
+        public void StartMovement(ChainSegmentData info)
         {
             if (movingHandler != null) return;
             IsPaused = false;
             if(gameObject.activeInHierarchy)
-            StartCoroutine(MovingChain(info, end_1, end_2));
+            StartCoroutine(MovingChain(info));
         }
 
 
@@ -26,6 +28,7 @@ namespace PuzzleGame
         {
             if (movingHandler != null)
                 StopCoroutine(movingHandler);
+            movingHandler = null;
         }
 
         public void PauseMovement()
@@ -37,10 +40,10 @@ namespace PuzzleGame
             IsPaused = false;
         }
 
-        public void SetPositionsForced(ChainSegmentInfo info, Transform end_1, Transform end_2)
+        public void SetPositionsForced(ChainSegmentData info)
         {
-            List<Vector3> positions = GetPositions(end_1.position, end_2.position, info._links.Count);
-            Vector3 dir = (end_2.position - end_1.position).normalized;
+            List<Vector3> positions = GetPositions(info.end_1.position, info.end_2.position, info._links.Count);
+            Vector3 dir = (info.end_2.position - info.end_1.position).normalized;
             for (int i = 0; i < positions.Count; i++)
             {
                 info._links[i].transform.position = positions[i];
@@ -48,39 +51,131 @@ namespace PuzzleGame
                     info._links[i].transform.rotation = Quaternion.LookRotation(dir);
             }
         }
-        private IEnumerator MovingChain(ChainSegmentInfo info, Transform end_1, Transform end_2)
+        public void SetPositionsForced(ChainSegmentData info, List<Vector3> positions, bool controllRotation,Vector3 lookVector)
+        {
+            for (int i = 0; i < positions.Count; i++)
+            {
+                info._links[i].transform.position = positions[i];
+                if (controllRotation)
+                    info._links[i].transform.rotation = Quaternion.LookRotation(lookVector);
+            }
+        }
+
+        public void SetPositionsForcedOffset(ChainSegmentData info,float percentOffset)
+        {
+            List<Vector3> positions = GetPositionsOffsetPercent(info.end_1.position, info.end_2.position, info._links.Count, percentOffset);
+            for (int i = 0; i < positions.Count; i++)
+            {
+                info._links[i].transform.position = positions[i];
+                if (LookAtDirection)
+                {
+                    Vector3 dir = (info.end_2.position - info._links[i].transform.position).normalized;
+                    info._links[i].transform.rotation = Quaternion.LookRotation(dir);
+                }
+            }
+        }
+
+        private IEnumerator MovingChain(ChainSegmentData info)
         {
             while (true)
             {
                 if (IsPaused == false)
-                    SetPositionsForced(info, end_1, end_2);
+                    SetPositionsForced(info);
                 yield return null;
             }
         }
 
-        private List<Vector3>  GetPositions(Vector3 start, Vector3 end, int count)
+        public List<Vector3>  GetPositions(Vector3 start, Vector3 end, int count)
         {
             List<Vector3> positions = new List<Vector3>(count);
-            if(count == 1)
+            Vector3 center = Vector3.LerpUnclamped(start, end, 0.5f);
+            for (int i = 0; i < count; i++)
             {
-                positions.Add(Vector3.Lerp(start, end, 0.5f));
+                float percent = (float)i / count;
+                percent = Mathf.Clamp(percent, 0.1f, 0.9f);
+                Vector3 pos = center + Vector3.up * VerticalSpacing*i;
+                positions.Add(pos);
             }
-            else
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    float percent = (float)i / count;
-                    percent = Mathf.Clamp(percent,0.2f, 0.8f);
-                    Vector3 pos = Vector3.Lerp(start, end, percent);
-                    positions.Add(pos);
-                }
-            }
-
             return positions;
         }
 
 
-        
+
+        public List<Vector3> GetPositions(Vector3 center, int count)
+        {
+            List<Vector3> positions = new List<Vector3>(count);
+            for (int i = 0; i < count; i++)
+            {
+                float percent = (float)i / count;
+                percent = Mathf.Clamp(percent, 0.1f, 0.9f);
+                Vector3 pos = center + Vector3.up * VerticalSpacing * i;
+                positions.Add(pos);
+            }
+            return positions;
+        }
+
+
+
+
+
+        public List<Vector3> GetPositionsOffsetPercent(Vector3 start, Vector3 end, int count, float offset)
+        {
+            List<Vector3> positions = new List<Vector3>(count);
+            Vector3 center = Vector3.LerpUnclamped(start, end, 0.5f + offset);
+            for (int i = 0; i < count; i++)
+            {
+                float percent = (float)i / count;
+                percent = Mathf.Clamp(percent, 0.1f, 0.9f);
+                Vector3 pos = center + Vector3.up * VerticalSpacing * i;
+                positions.Add(pos);
+            }
+            return positions;
+        }
+
+        #region Old
+        //public List<Vector3> GetPositions(Vector3 start, Vector3 end, int count)
+        //{
+        //    List<Vector3> positions = new List<Vector3>(count);
+        //    if (count == 1)
+        //    {
+        //        positions.Add(Vector3.LerpUnclamped(start, end, 0.5f));
+        //    }
+        //    else
+        //    {
+        //        for (int i = 0; i < count; i++)
+        //        {
+        //            float percent = (float)i / count;
+        //            percent = Mathf.Clamp(percent, 0.1f, 0.9f);
+        //            Vector3 pos = Vector3.LerpUnclamped(start, end, percent);
+        //            positions.Add(pos);
+        //        }
+        //    }
+        //    return positions;
+        //}
+
+        //public List<Vector3> GetPositionsOffsetPercent(Vector3 start, Vector3 end, int count, float offset)
+        //{
+        //List<Vector3> positions = new List<Vector3>(count);
+        //if (count == 1)
+        //{
+        //    positions.Add(Vector3.LerpUnclamped(start, end, 0.5f + offset));
+        //}
+        //else
+        //{
+        //    for (int i = 0; i < count; i++)
+        //    {
+        //        float percent = (float)i / count;
+        //        percent = Mathf.Clamp(percent, 0.1f, 0.9f);
+        //        Vector3 pos = Vector3.LerpUnclamped(start, end, percent+ offset);
+        //        positions.Add(pos);
+        //    }
+        //}
+
+        //return positions;
+
+        //}
+        #endregion
+
 
     }
 }

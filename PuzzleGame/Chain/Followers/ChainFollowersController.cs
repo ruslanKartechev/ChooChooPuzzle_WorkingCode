@@ -150,12 +150,16 @@ namespace PuzzleGame
 
         public void OnRelease()
         {
+            foreach (ChainFollower f in _followers)
+            {
+                f.ClearMoverHistory();
+                //f.OnChainRelease();
+            }
             end_1.ReleaseEndNode();
             end_2.ReleaseEndNode();
             StopAllFollowers();
-            foreach (ChainFollower f in _followers)
-                f.ClearMoverHistory();
-        
+ 
+
             _OnFollowerInput = null;
             _leading = null;
             _Controller.OnChainReleased();

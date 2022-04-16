@@ -11,6 +11,8 @@ namespace PuzzleGame
         private ChainLinkCollisionDetector detector;
         public Action<ChainLink> OnCutCall;
         public ChainLinkComponents Components { get { return _components; } }
+        public GameObject Model { get { return _components._model; } }
+        
 
         private void Start()
         {

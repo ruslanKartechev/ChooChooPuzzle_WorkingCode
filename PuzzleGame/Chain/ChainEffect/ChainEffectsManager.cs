@@ -11,11 +11,11 @@ namespace PuzzleGame
         private ChainEffectsSettings _Settings;
         private List<ChainSegmentData> _Links;
         private ChainPositionInfo _ChainPositions;
-        public ChainEffectsManager(ChainEffectsSettings settings, List<ChainSegmentManager> managers)
+        public ChainEffectsManager(ChainEffectsSettings settings, List<LinksSegmentController> managers)
         {
             _Settings = settings;
             List<ChainSegmentData> segmentsLinks = new List<ChainSegmentData>();
-            foreach (ChainSegmentManager manager in managers)
+            foreach (LinksSegmentController manager in managers)
             {
                 if (manager != null)
                 {

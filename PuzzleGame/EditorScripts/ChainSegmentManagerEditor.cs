@@ -4,13 +4,13 @@ namespace PuzzleGame
 {
 
 #if UNITY_EDITOR
-    [CustomEditor(typeof(ChainSegmentManager))]
+    [CustomEditor(typeof(LinksSegmentController))]
     public class ChainSegmentManagerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            ChainSegmentManager me = target as ChainSegmentManager;
+            LinksSegmentController me = target as LinksSegmentController;
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("GetLinks"))

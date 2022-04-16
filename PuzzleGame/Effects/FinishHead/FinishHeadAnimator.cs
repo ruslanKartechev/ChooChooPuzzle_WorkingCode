@@ -13,11 +13,13 @@ namespace PuzzleGame
             _anim.SetBool(PassiveActive, false);
             _anim.SetBool(ActivePassive, false);
         }
+
         public override void Activate()
         {
             _anim.SetBool(ActivePassive, false);
             _anim.SetBool(PassiveActive, true);
         }
+
         public override void Deactivate()
         {
             _anim.SetBool(PassiveActive, false);

@@ -21,7 +21,7 @@ namespace PuzzleGame
         [Header("Start nodes")]
         [SerializeField] private List<SplineNode> _nodes = new List<SplineNode>();
         [Header("Chain segment managers")]
-        [SerializeField] private List<ChainSegmentManager> _chainSegments = new List<ChainSegmentManager>();
+        [SerializeField] private List<LinksSegmentController> _chainSegments = new List<LinksSegmentController>();
         private ChainEffectsManager _Effects;
         //public ChainConstaintHandler _ConstraintHandler;
         private PositionRecorder _recorder;
@@ -71,9 +71,9 @@ namespace PuzzleGame
         }
         private void InitSegments()
         {
-            foreach(ChainSegmentManager segment in _chainSegments)
+            foreach(LinksSegmentController segment in _chainSegments)
             {
-                if (segment != null) segment.InitSegment(this);
+                if (segment != null) segment.InitSegment();
             }
         }
         #endregion
@@ -97,7 +97,7 @@ namespace PuzzleGame
         #region SegmentLinks
         public void StartMovingLinks()
         {
-            foreach (ChainSegmentManager chain in _chainSegments)
+            foreach (LinksSegmentController chain in _chainSegments)
             {
                 if (chain != null)
                     chain.StartChainMovement();
@@ -106,14 +106,13 @@ namespace PuzzleGame
 
         public void StopMovingLinks()
         {
-            foreach (ChainSegmentManager chain in _chainSegments)
+            foreach (LinksSegmentController chain in _chainSegments)
             {
                 if (chain != null)
                     chain.StopChainMovement();
             }
         }
         #endregion
-
         public void OnPositionChanged()
         {
             GameManager.Instance._events.MoveMade.Invoke();
@@ -146,7 +145,7 @@ namespace PuzzleGame
                 _Effects?.ExecuteEffect(ChainEffects.Stop, _followersController.GetChainPosition());
                 StopMovingLinks();
                 _Effects.JumpTo(node.transform,OnSegmentEaten, OnChainEaten);
-                FinishMatcherController.Instance.FinishReached(_number);
+                FinishMatcherController.Instance.ChainFinished(_number);
                 GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishCorrect.ToString());
             }
             else
@@ -192,7 +191,7 @@ namespace PuzzleGame
                     break;
             }
         }
-        public void Cut(ChainSegmentManager segmentCaller, int linkIndex)
+        public void Cut(LinksSegmentController segmentCaller, int linkIndex)
         {
             SegmentIndecesCalculator calculator = new SegmentIndecesCalculator();
             ChainCutter cutter = new ChainCutter();
@@ -265,10 +264,10 @@ namespace PuzzleGame
 
         public void GetChainSegments()
         {
-            _chainSegments = new List<ChainSegmentManager>();
+            _chainSegments = new List<LinksSegmentController>();
             for (int i = 0; i < transform.parent.childCount; i++)
             {
-                ChainSegmentManager temp = transform.parent.GetChild(i).GetComponent<ChainSegmentManager>();
+                LinksSegmentController temp = transform.parent.GetChild(i).GetComponent<LinksSegmentController>();
                 if (temp != null && _chainSegments.Contains(temp) == false)
                 {
                     _chainSegments.Add(temp);
@@ -276,7 +275,7 @@ namespace PuzzleGame
                 }
             }
         }
-        private void SetSegmentEnds(ChainSegmentManager segment, int index)
+        private void SetSegmentEnds(LinksSegmentController segment, int index)
         {
             if(index == 0)
             {
@@ -300,14 +299,11 @@ namespace PuzzleGame
         public void SetChainPositions()
         {
 
-            foreach (ChainSegmentManager segment in _chainSegments)
+            foreach (LinksSegmentController segment in _chainSegments)
             {
                 if (segment != null)
                     segment.SetPositions();
             }
-
-
-
         }
         #endregion
 

@@ -23,13 +23,13 @@ namespace CommonGame
         public DataManager _data;
         public ServerDataLoader _dataLoader;
         public GameControllsMaster _controlls;
-        [HideInInspector] public GameUIController _ui;
+        public GameUIController _ui;
 
         private void Start()
         {
+            if(_ui == null) { _ui = FindObjectOfType<GameUIController>(); }
             if (UseUI)
             {
-                _ui = FindObjectOfType<GameUIController>();
                 if (_ui == null) Debug.Log("UI controller was not found");
                 _ui.Init();
             }
