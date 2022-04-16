@@ -6,7 +6,7 @@ namespace CommonGame.Controlls
 {
     public class GameControllsMaster : MonoBehaviour
     {
-        [SerializeField] protected ControllsManager _manager;
+        [SerializeField] protected IControlls _manager;
         [SerializeField] private bool IsDebug = true;
         public void Init()
         {
@@ -19,14 +19,6 @@ namespace CommonGame.Controlls
                 _manager.EnableControlls();
 
             }
-            //GameManager.Instance._events.LevelStarted.AddListener(OnLevelStarted);
-            //GameManager.Instance._events.LevelEndreached.AddListener(OnLevelEnd);
-            //GameManager.Instance._events.LevelLoaded.AddListener(OnLevelLoaded);
-
-        }
-        protected void OnLevelLoaded()
-        {
-          //  _manager.SetMover(GameManager.Instance._data._currentLevel._Player.Components._InputHandler);
         }
         protected void OnLevelStarted()
         {

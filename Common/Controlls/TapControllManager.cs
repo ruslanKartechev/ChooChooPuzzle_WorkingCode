@@ -11,7 +11,7 @@ namespace CommonGame.Controlls
         None
     }
 
-    public class TapControllManager : ControllsManager
+    public class TapControllManager : IControlls
     {
         [Header("Settings")]
         [SerializeField] private int MaxRad;
@@ -20,6 +20,8 @@ namespace CommonGame.Controlls
         private StickControllsPanel _ui;
         private Coroutine _controllStickHandler;
         private IInputHandler _inputHandler;
+
+        #region Init
         public override void Init(object ui)
         {
             _ui = (StickControllsPanel)ui;
@@ -30,29 +32,38 @@ namespace CommonGame.Controlls
         {
             _inputHandler = (IInputHandler)inpHandler;
         }
-        #region Base
+        #endregion
 
+        #region OnOff
         public override void EnableControlls()
         {
-            StartInputCheck();            
+            StartInputCheck();
         }
         public override void DisableControlls()
         {
             StopInputCheck();
         }
-
         public override void HideControlls()
         {
-            base.HideControlls();
             StopInputCheck();
             _ui.HidePanel(true);
         }
         public override void ShowControlls()
         {
-            base.ShowControlls();
             _ui.ShowPanel(true);
-
         }
+        protected override void StartInputCheck()
+        {
+            if (InputCheck != null) StopCoroutine(InputCheck);
+            InputCheck = StartCoroutine(InputChecking());
+        }
+        protected override void StopInputCheck()
+        {
+            if (InputCheck != null) StopCoroutine(InputCheck);
+            InputCheck = null;
+        }
+
+
         protected override IEnumerator InputChecking()
         {
             while (true)
@@ -67,8 +78,7 @@ namespace CommonGame.Controlls
         }
         #endregion
 
-
-
+        #region Events
         public override void OnClick()
         {
             switch (_ui.OnClick())
@@ -80,20 +90,17 @@ namespace CommonGame.Controlls
                     OnAttackButton();
                     break;
             }
-                        
-
         }
-
+        public override void OnRelease()
+        {
+            if (_ui != null)
+                _ui.OnRelease();
+        }
         private void OnAttackButton()
         {
 
         }
-        public override void OnRelease()
-        {
-            if(_ui != null)
-                _ui.OnRelease();
-        }
-
+        #endregion
 
         #region ControllStick
         protected void StartControllStickHandler()
