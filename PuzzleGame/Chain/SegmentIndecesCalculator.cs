@@ -14,17 +14,17 @@ namespace PuzzleGame
 
     public class SegmentIndecesCalculator
     {
-        public List<SegmentIndeces> ConvertAll(List<LinksSegmentController> segments)
+        public List<SegmentIndeces> ConvertAll(List<LinksSegmentManager> segments)
         {
             List<SegmentIndeces> output = new List<SegmentIndeces>();
-            foreach (LinksSegmentController s in segments)
+            foreach (LinksSegmentManager s in segments)
             {
                 if(s != null)
                     output.Add(Convert(segments, s));
             }
             return output;
         }
-        public SegmentIndeces Convert(List<LinksSegmentController> segments, LinksSegmentController target)
+        public SegmentIndeces Convert(List<LinksSegmentManager> segments, LinksSegmentManager target)
         {
             SegmentIndeces result = new SegmentIndeces();
             result.LinksCount = target._Links.Count();

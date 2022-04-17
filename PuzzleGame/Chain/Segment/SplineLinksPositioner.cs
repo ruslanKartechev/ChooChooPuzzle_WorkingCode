@@ -1,8 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
+
 namespace PuzzleGame
 {
-
+    public class SplineLinksPositioner : ChainLinksPositioner
+    {
+        
+    }
 }

@@ -8,39 +8,34 @@ namespace PuzzleGame
 {
     public class ChainLinksPositioner : MonoBehaviour
     {
-        private Coroutine movingHandler;
-        [SerializeField] private bool LookAtDirection = true;
+        protected Coroutine movingHandler;
+        [SerializeField] protected bool LookAtDirection = true;
 
-        private bool IsPaused = false;
+        protected bool IsPaused = false;
         [Header("Vertical spacing of the links")]
-        [SerializeField] private float VerticalSpacing = 0.2f;
-        [SerializeField] private List<float> CustomSpacing = new List<float>();
-        public void StartMovement(ChainSegmentData info)
+        [SerializeField] protected float VerticalSpacing = 0.2f;
+        public virtual void StartMovement(ChainSegmentData info)
         {
             if (movingHandler != null) return;
             IsPaused = false;
             if(gameObject.activeInHierarchy)
             StartCoroutine(MovingChain(info));
         }
-
-
-        public void StopMovement()
+        public virtual void StopMovement()
         {
             if (movingHandler != null)
                 StopCoroutine(movingHandler);
             movingHandler = null;
         }
-
-        public void PauseMovement()
+        public virtual void PauseMovement()
         {
             IsPaused = true;
         }
-        public void ResumeMovement()
+        public virtual void ResumeMovement()
         {
             IsPaused = false;
         }
-
-        public void SetPositionsForced(ChainSegmentData info)
+        public virtual void SetPositionsForced(ChainSegmentData info)
         {
             List<Vector3> positions = GetPositions(info.end_1.position, info.end_2.position, info._links.Count);
             Vector3 dir = (info.end_2.position - info.end_1.position).normalized;
@@ -51,7 +46,7 @@ namespace PuzzleGame
                     info._links[i].transform.rotation = Quaternion.LookRotation(dir);
             }
         }
-        public void SetPositionsForced(ChainSegmentData info, List<Vector3> positions, bool controllRotation,Vector3 lookVector)
+        public virtual void SetPositionsForced(ChainSegmentData info, List<Vector3> positions, bool controllRotation,Vector3 lookVector)
         {
             for (int i = 0; i < positions.Count; i++)
             {
@@ -61,7 +56,7 @@ namespace PuzzleGame
             }
         }
 
-        public void SetPositionsForcedOffset(ChainSegmentData info,float percentOffset)
+        public virtual void SetPositionsForcedOffset(ChainSegmentData info,float percentOffset)
         {
             List<Vector3> positions = GetPositionsOffsetPercent(info.end_1.position, info.end_2.position, info._links.Count, percentOffset);
             for (int i = 0; i < positions.Count; i++)
@@ -75,7 +70,7 @@ namespace PuzzleGame
             }
         }
 
-        private IEnumerator MovingChain(ChainSegmentData info)
+        protected virtual IEnumerator MovingChain(ChainSegmentData info)
         {
             while (true)
             {
@@ -85,7 +80,7 @@ namespace PuzzleGame
             }
         }
 
-        public List<Vector3>  GetPositions(Vector3 start, Vector3 end, int count)
+        public virtual List<Vector3>  GetPositions(Vector3 start, Vector3 end, int count)
         {
             List<Vector3> positions = new List<Vector3>(count);
             Vector3 center = Vector3.LerpUnclamped(start, end, 0.5f);
@@ -99,9 +94,7 @@ namespace PuzzleGame
             return positions;
         }
 
-
-
-        public List<Vector3> GetPositions(Vector3 center, int count)
+        public virtual List<Vector3> GetPositions(Vector3 center, int count)
         {
             List<Vector3> positions = new List<Vector3>(count);
             for (int i = 0; i < count; i++)
@@ -114,11 +107,7 @@ namespace PuzzleGame
             return positions;
         }
 
-
-
-
-
-        public List<Vector3> GetPositionsOffsetPercent(Vector3 start, Vector3 end, int count, float offset)
+        public virtual List<Vector3> GetPositionsOffsetPercent(Vector3 start, Vector3 end, int count, float offset)
         {
             List<Vector3> positions = new List<Vector3>(count);
             Vector3 center = Vector3.LerpUnclamped(start, end, 0.5f + offset);
@@ -131,51 +120,5 @@ namespace PuzzleGame
             }
             return positions;
         }
-
-        #region Old
-        //public List<Vector3> GetPositions(Vector3 start, Vector3 end, int count)
-        //{
-        //    List<Vector3> positions = new List<Vector3>(count);
-        //    if (count == 1)
-        //    {
-        //        positions.Add(Vector3.LerpUnclamped(start, end, 0.5f));
-        //    }
-        //    else
-        //    {
-        //        for (int i = 0; i < count; i++)
-        //        {
-        //            float percent = (float)i / count;
-        //            percent = Mathf.Clamp(percent, 0.1f, 0.9f);
-        //            Vector3 pos = Vector3.LerpUnclamped(start, end, percent);
-        //            positions.Add(pos);
-        //        }
-        //    }
-        //    return positions;
-        //}
-
-        //public List<Vector3> GetPositionsOffsetPercent(Vector3 start, Vector3 end, int count, float offset)
-        //{
-        //List<Vector3> positions = new List<Vector3>(count);
-        //if (count == 1)
-        //{
-        //    positions.Add(Vector3.LerpUnclamped(start, end, 0.5f + offset));
-        //}
-        //else
-        //{
-        //    for (int i = 0; i < count; i++)
-        //    {
-        //        float percent = (float)i / count;
-        //        percent = Mathf.Clamp(percent, 0.1f, 0.9f);
-        //        Vector3 pos = Vector3.LerpUnclamped(start, end, percent+ offset);
-        //        positions.Add(pos);
-        //    }
-        //}
-
-        //return positions;
-
-        //}
-        #endregion
-
-
     }
 }

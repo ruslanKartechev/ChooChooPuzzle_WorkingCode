@@ -7,7 +7,7 @@ using CommonGame.UI;
 
 namespace PuzzleGame.Controlls
 {
-    public class DragControllsManager : ControllsManager
+    public class DragControllsManager : IControllsManager
     {
         public LayerMask CastingMask;
         private IMovable currentTarget;
@@ -20,11 +20,11 @@ namespace PuzzleGame.Controlls
 
         public override void EnableControlls()
         {
-            base.EnableControlls();
+            StartInputCheck();
         }
         public override void DisableControlls()
         {
-            base.DisableControlls();
+            StopInputCheck();
         }
 
 
@@ -69,7 +69,6 @@ namespace PuzzleGame.Controlls
                 pointerOldPos = pointerNewPos;
                 yield return null;
             }
-
         }
 
 
@@ -77,16 +76,38 @@ namespace PuzzleGame.Controlls
         {
             while (true)
             {
-
                 if (Input.GetMouseButtonDown(0))
                     OnClick();
                 else if (Input.GetMouseButtonUp(0))
                     OnRelease();
-
-
                 yield return null;
             }
 
+        }
+
+        protected override void StartInputCheck()
+        {
+            if (InputCheck != null) StopCoroutine(InputCheck);
+            InputCheck = StartCoroutine(InputChecking());
+        }
+
+        protected override void StopInputCheck()
+        {
+            if (InputCheck != null) StopCoroutine(InputCheck);
+            InputCheck = null;
+        }
+
+        public override void SetInputHandler(Object handler)
+        {
+            
+        }
+
+        public override void ShowControlls()
+        {
+        }
+
+        public override void HideControlls()
+        {
         }
     }
 }

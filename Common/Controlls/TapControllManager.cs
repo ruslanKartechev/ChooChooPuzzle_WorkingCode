@@ -11,7 +11,7 @@ namespace CommonGame.Controlls
         None
     }
 
-    public class TapControllManager : IControlls
+    public class TapControllManager : IControllsManager
     {
         [Header("Settings")]
         [SerializeField] private int MaxRad;
@@ -28,7 +28,7 @@ namespace CommonGame.Controlls
             _ui.MaxRad = MaxRad;
             _ui.Sensitivity = Sensitivity;
         }
-        public override void SetMover(Object inpHandler)
+        public override void SetInputHandler(Object inpHandler)
         {
             _inputHandler = (IInputHandler)inpHandler;
         }

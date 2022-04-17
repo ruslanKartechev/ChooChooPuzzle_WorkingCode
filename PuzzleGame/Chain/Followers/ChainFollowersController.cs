@@ -241,9 +241,9 @@ namespace PuzzleGame
         }
         #endregion
 
-        public void HandleConstraintMessage(string message)
+        public void HandleConstraintMessage(string message, ChainFollower caller)
         {
-            _Controller.HandleConstraintMessage(message);
+            _Controller.HandleConstraintMessage(message, caller);
             switch (message)
             {
                 case ConstraintMessages.WrongAngle:

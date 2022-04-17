@@ -21,9 +21,8 @@ namespace PuzzleGame
         [Header("Start nodes")]
         [SerializeField] private List<SplineNode> _nodes = new List<SplineNode>();
         [Header("Chain segment managers")]
-        [SerializeField] private List<LinksSegmentController> _chainSegments = new List<LinksSegmentController>();
+        [SerializeField] private List<ChainSegmentManager> _chainSegments = new List<ChainSegmentManager>();
         private ChainEffectsManager _Effects;
-        //public ChainConstaintHandler _ConstraintHandler;
         private PositionRecorder _recorder;
 
         private ChainFollowersController _followersController;
@@ -46,11 +45,10 @@ namespace PuzzleGame
             SetNodes();
 
             _followersController.Init(settings.followerSettings);
-            _followersController.InitPositionRecorder(_recorder); //
+            _followersController.InitPositionRecorder(_recorder); 
 
             GetChainSegments();
             _chainSegments.TrimExcess();
-            InitSegments();
             SetChainPositions();
 
             _recorder = new PositionRecorder();
@@ -68,13 +66,6 @@ namespace PuzzleGame
             GameManager.Instance._events.LevelStarted.RemoveListener(OnLevelStart);
             GameManager.Instance._events.LevelFinished.RemoveListener(OnLevelEnd);
             _followersController.Deactivate();
-        }
-        private void InitSegments()
-        {
-            foreach(LinksSegmentController segment in _chainSegments)
-            {
-                if (segment != null) segment.InitSegment();
-            }
         }
         #endregion
 
@@ -97,7 +88,7 @@ namespace PuzzleGame
         #region SegmentLinks
         public void StartMovingLinks()
         {
-            foreach (LinksSegmentController chain in _chainSegments)
+            foreach (ChainSegmentManager chain in _chainSegments)
             {
                 if (chain != null)
                     chain.StartChainMovement();
@@ -106,7 +97,7 @@ namespace PuzzleGame
 
         public void StopMovingLinks()
         {
-            foreach (LinksSegmentController chain in _chainSegments)
+            foreach (ChainSegmentManager chain in _chainSegments)
             {
                 if (chain != null)
                     chain.StopChainMovement();
@@ -172,7 +163,7 @@ namespace PuzzleGame
         #endregion
 
 
-        public void HandleConstraintMessage(string message)
+        public void HandleConstraintMessage(string message, ChainFollower caller)
         {
             switch (message)
             {
@@ -187,34 +178,15 @@ namespace PuzzleGame
                     CameraController.Instance.Shake();
                     GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
                     if (_followersController.LeadingFollower== null) { Debug.Log("Leading is null, can't show cross"); return; }
-                    HitCrossManager.Instance.ShowCross(_followersController.LeadingFollower.transform.position);
+                    HitCrossManager.Instance.ShowCross(caller.transform.position);
                     break;
             }
         }
-        public void Cut(LinksSegmentController segmentCaller, int linkIndex)
-        {
-            SegmentIndecesCalculator calculator = new SegmentIndecesCalculator();
-            ChainCutter cutter = new ChainCutter();
-            ChainCutResult res = cutter.Cut(calculator.ConvertAll(_chainSegments),
-                calculator.Convert(_chainSegments, segmentCaller),
-                linkIndex);
-            segmentCaller.DropLinks(res.LinksToCut);
-            if (res.SegmentsAway != null)
-            {
-                foreach (int i in res.SegmentsAway)
-                {
-                    if (_chainSegments[i] != null)
-                        _chainSegments[i].DropAllLinks();
-                    _chainSegments[i] = null;
-                }
-                _chainSegments.RemoveAll(x => x = null);
-            }
-        }
+   
 
         #region FromEditor
         public void ConnectChainFollowers()
         {
-            //if (_followers.Count < 3) { Debug.Log("Min amount of links is 3"); return; }
             _followers[0].ResetLinks();
             _followers[0].AddLink(_followers[1]);
             for (int i = 1; i < _followers.Count; i++)
@@ -264,34 +236,30 @@ namespace PuzzleGame
 
         public void GetChainSegments()
         {
-            _chainSegments = new List<LinksSegmentController>();
+            _chainSegments = new List<ChainSegmentManager>();
             for (int i = 0; i < transform.parent.childCount; i++)
             {
-                LinksSegmentController temp = transform.parent.GetChild(i).GetComponent<LinksSegmentController>();
+                ChainSegmentManager temp = transform.parent.GetChild(i).GetComponent<ChainSegmentManager>();
                 if (temp != null && _chainSegments.Contains(temp) == false)
                 {
                     _chainSegments.Add(temp);
-                    SetSegmentEnds(temp, _chainSegments.IndexOf(temp));
+                    SetSegmentPivots(temp, _chainSegments.IndexOf(temp));
                 }
             }
         }
-        private void SetSegmentEnds(LinksSegmentController segment, int index)
+        private void SetSegmentPivots(ChainSegmentManager segment, int index)
         {
             if(index == 0)
             {
-                segment.pivot_1 = _followers[0].transform;
-                segment.pivot_2 = _followers[1].transform;
+                segment.InitSegment(_followers[0].transform, _followers[1].transform);
             }
             else if(index == _followers.Count-2) 
             {
-                segment.pivot_1 = _followers[_followers.Count - 2].transform;
-                segment.pivot_2 = _followers[_followers.Count - 1].transform;
+                segment.InitSegment(_followers[_followers.Count - 2].transform, _followers[_followers.Count - 1].transform);
             }
             else
             {
-                segment.pivot_1 = _followers[index].transform;
-                segment.pivot_2 = _followers[index+1].transform;
-
+                segment.InitSegment(_followers[index].transform, _followers[index+1].transform);
             }
         }
 
@@ -299,10 +267,10 @@ namespace PuzzleGame
         public void SetChainPositions()
         {
 
-            foreach (LinksSegmentController segment in _chainSegments)
+            foreach (ChainSegmentManager segment in _chainSegments)
             {
                 if (segment != null)
-                    segment.SetPositions();
+                    segment.UpdateSegment();
             }
         }
         #endregion

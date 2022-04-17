@@ -95,7 +95,7 @@ namespace PuzzleGame
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
             {
-                _Controller.HandleConstraintMessage(result._message);
+                _Controller.HandleConstraintMessage(result._message,this);
                 return false;
             }
             SplineNode next = NodeSeeker.FindNextNode(input, currentNode, result.Options, null/*_Controller.GetChainPosition().chainNodes*/);
@@ -204,7 +204,7 @@ namespace PuzzleGame
 
         private void OnBounceHit()
         {
-            _Controller.HandleConstraintMessage(ConstraintMessages.CloseContanctBlock);
+            _Controller.HandleConstraintMessage(ConstraintMessages.CloseContanctBlock,this);
             _mover.OnBounceHit = null;
         }
 
@@ -404,7 +404,7 @@ namespace PuzzleGame
             ConstraintResult result = _Controller._ConstraintHandler.CheckConstraint(currentNode._Constraints, input);
             if (result.Allowed == false || result.Options == null)
             {
-                _Controller.HandleConstraintMessage(result._message);
+                _Controller.HandleConstraintMessage(result._message,this);
                 return null;
             }
             SplineNode res = null;

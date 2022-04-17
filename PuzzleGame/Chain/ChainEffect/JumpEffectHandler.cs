@@ -8,31 +8,78 @@ namespace PuzzleGame
 {
     public class JumpEffectHandler : EffectCommandHandler
     {
-        private List<ChainSegmentData> _Links;
+        private List<ChainSegmentData> _Segments;
         private ChainEffect_Jump _settings;
         private Action<ChainSegmentData> onSegmentJump;
         private Action onEffectEnd;
-        public JumpEffectHandler(ChainEffect_Jump settings, List<ChainSegmentData> links, Action<ChainSegmentData> onSegmentJump, Action onEffectEnd)
+        public JumpEffectHandler(ChainEffect_Jump settings, List<ChainSegmentData> segments, Action<ChainSegmentData> onSegmentJump, Action onEffectEnd)
         {
-            _settings = settings; _Links = links; this.onSegmentJump = onSegmentJump; this.onEffectEnd = onEffectEnd;
+            _settings = settings; _Segments = segments; this.onSegmentJump = onSegmentJump; this.onEffectEnd = onEffectEnd;
         }
 
         public override void ExecuteEffect()
         {
-            Jump();
+            JumpByType();
         }
-        private async void Jump()
+        private async void JumpByType()
         {
             List<Task> tasks = new List<Task>();
-            for (int i = 0; i < _Links.Count; i++)
+            foreach (ChainSegmentData data in _Segments)
             {
-                tasks.Add( JumpSegment(_Links[i]) );
+                switch (data.type)
+                {
+                    case ChainSegmentType.Chain:
+                        tasks.Add( JumpChain(data) );
+                        break;
+                    case ChainSegmentType.Spline:
+                        tasks.Add( JumpSpline(data) );
+                        break;
+                }
             }
             await Task.WhenAll(tasks);
             onEffectEnd?.Invoke();
         }
 
-        private async Task JumpSegment(ChainSegmentData data)
+
+        private async Task JumpSpline(ChainSegmentData data)
+        {
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < data._links.Count; i++)
+            {
+                tasks.Add(JumpSegmentSpline(data._links[i].transform) );
+            }
+            await Task.WhenAll(tasks);
+            onSegmentJump?.Invoke(data);
+        }
+        private async Task JumpSegmentSpline(Transform controllPoint)
+        {
+            Vector3 start = controllPoint.position;
+            Vector3 end = _settings.Target.transform.position;
+            Vector3 inflection = Vector3.Lerp(start, end, 1);
+            inflection.y = _settings.BezierHeight;
+            float time = (end - start).magnitude / _settings.JumpSpeed;
+            float elapsed = 0;
+            while (elapsed <= time)
+            {
+                float t = elapsed / time;
+                Vector3 pos = Bezier.GetPointQuadratic(start, inflection, end, t);
+                controllPoint.transform.position = pos;
+                elapsed += Time.deltaTime;
+                await Task.Yield();
+            }
+            controllPoint.transform.position = Bezier.GetPointQuadratic(start, inflection, end, 1);
+
+        }
+
+
+
+        private async Task JumpChain(ChainSegmentData data)
+        {
+            await JumpSegmentChain(data);
+            onSegmentJump?.Invoke(data);
+        }
+
+        private async Task JumpSegmentChain(ChainSegmentData data)
         {
             Vector3 start = data._links[0].transform.position;
             Vector3 end = _settings.Target.transform.position;
@@ -53,16 +100,16 @@ namespace PuzzleGame
                 await Task.Yield();
             }
             SetLinksPositions(1);
-            onSegmentJump?.Invoke(data);
             
-
             void SetLinksPositions(float t)
             {
-                Vector3 pos = Bezier.GetPointQuadratic(start, inflection, end,t);
+                if (data._positioner == null) { Debug.Log("No links positioner");return; }
+                Vector3 pos = Bezier.GetPointQuadratic(start, inflection, end, t);
                 List<Vector3> linksPos = data._positioner.GetPositions(pos, data._links.Count);
                 data._positioner.SetPositionsForced(data, linksPos, false, Vector3.one);
             }
         }
+
         private async void ScaleDecrease(float time, Transform target)
         {
             float elapsed = 0f;

@@ -4,13 +4,13 @@ namespace PuzzleGame
 {
 
 #if UNITY_EDITOR
-    [CustomEditor(typeof(LinksSegmentController))]
+    [CustomEditor(typeof(LinksSegmentManager))]
     public class ChainSegmentManagerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            LinksSegmentController me = target as LinksSegmentController;
+            LinksSegmentManager me = target as LinksSegmentManager;
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("GetLinks"))
@@ -20,7 +20,7 @@ namespace PuzzleGame
             if (GUILayout.Button("SetPositions"))
             {
                 me.GetLinks();
-                me.SetPositions();
+                me.UpdateSegment();
             }
                
             GUILayout.EndHorizontal();

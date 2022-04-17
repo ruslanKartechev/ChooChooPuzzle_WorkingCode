@@ -22,7 +22,7 @@ namespace PuzzleGame
     }
 #endif
 
-    public class SplineSegmentController : MonoBehaviour
+    public class SplineSegmentController : ChainSegmentManager
     {
         private StretchCurveManager manager;
         private PointsPosCalculator positionCalculator;
@@ -31,16 +31,35 @@ namespace PuzzleGame
         private ObiRopePositioner ropePositioner;
         [SerializeField] StretchSegmentData data;
 
+        private bool DoUpdate = false;
+        private List<ChainLink> _links = new List<ChainLink>();
+
         private void Start()
         {
             InitRunTime();
             placer.UpdatePositions();
-
         }
+
+        private List<ChainLink> InitLinks()
+        {
+            _links = new List<ChainLink>();
+            for (int i = 0; i < data.ControllPoints.Count; i++)
+            {
+                ChainLink l = data.ControllPoints[i].GetComponent<ChainLink>();
+                if (l == null)
+                    l = data.ControllPoints[i].gameObject.AddComponent<ChainLink>();
+                _links.Add(l);
+            }
+            return _links;
+        }
+
         public void Update()
         {
-            manager.UpdateKnots();
-            placer.UpdatePositions();
+            if (DoUpdate)
+            {
+                manager.UpdateKnots();
+                placer.UpdatePositions();
+            }
         }
 
         // run-time
@@ -66,117 +85,40 @@ namespace PuzzleGame
                 positionCalculator = new PointsPosCalculator(data.Spline);
             if (placer == null)
                 placer = new PointsPlacer(positionCalculator);
-            placer.SpawnPoints(data.PivotPointsCount, transform.parent,data.ControllPoints);
+            placer.SpawnPoints(data.PivotPointsCount, transform.parent, data.ControllPoints);
             placer.UpdatePositions();
         }
 
-    }
-
-
-
-
-    public class PointsPosCalculator
-    {
-        private SplineComputer _spline;
-        public PointsPosCalculator(SplineComputer spline)
+        public override void InitSegment(Transform pivot1, Transform pivot2)
         {
-            _spline = spline;
+
         }
-        public void SetSpline(SplineComputer spline)
-        {
-            _spline = spline;
-        }
-        public List<Vector3> GetPointPositions(int num)
-        {
-            if (_spline == null) { Debug.LogError("Spline was not assigned"); return null; }
-            List<Vector3> result = new List<Vector3>(num);
-            double percent = 0f;
-            float spacing = (float)1 / (num-1);
-            for(int i=0; i <= num-1; i++)
-            {
-                Vector3 pos = _spline.Evaluate(percent).position;
-                percent += spacing;
-                result.Add(pos);
-            }
-            return result;
-        }
-    }
 
-
-
-    public class PointsPlacer
-    {
-        private PointsPosCalculator _calculator;
-        private List<Transform> points;
-        public List<Transform> Points { get { return points; } }
-        private int PointsCount { get { if (points != null) return points.Count; else return 0; } }
-
-        float Yoffset = 0.15f;
-        public PointsPlacer(PointsPosCalculator calculator)
+        public override void StartChainMovement()
         {
-            _calculator = calculator;
-            points = new List<Transform>();
+            DoUpdate = true;
         }
-        public void SetPoints(List<Transform> _points)
+
+        public override void StopChainMovement()
         {
-            points = _points;
+            DoUpdate = false;
         }
-        public void SpawnPoints(int n, Transform parent, List<Transform> container)
+
+        public override ChainSegmentData GetChainInfo()
         {
-            for(int i=0; i< n; i++)
-            {
-                Transform p = new GameObject(i.ToString()).transform;
-                points.Add(p);
-                p.parent = parent;
-                container.Add(p);
-            }
+            ChainSegmentData data = new ChainSegmentData();
+            data.type = ChainSegmentType.Spline;
+            data._links = InitLinks();
+            return data;
         }
- 
-        public void UpdatePositions()
+
+        public override void UpdateSegment()
         {
-            if (_calculator == null) { Debug.LogError("Calculator not assigned");return; }
-            List<Vector3> positions = _calculator.GetPointPositions(PointsCount);
-            for(int i=0; i<points.Count; i++)
-            {
-                if(points[i] != null)
-                    points[i].position = positions[i] + new Vector3(0,Yoffset,0);
-            }
+            InitRunTime();
+            manager.UpdateKnots();
+            placer.UpdatePositions();
         }
     }
 
-
-
-    public class ObiRopePositioner
-    {
-        private ObiRope _rope;
-        public ObiRopePositioner(ObiRope rope)
-        {
-            _rope = rope;
-        }
-        public void InitPositions(List<Vector3> positions)
-        {
-            if (_rope.path.m_Points.Count > positions.Count)
-            {
-                int countDiff = _rope.path.m_Points.Count - positions.Count;
-                for(int i =0; i<countDiff; i++)
-                    _rope.path.RemoveControlPoint(_rope.path.ControlPointCount-1);
-            }
-            for (int i=0; i < positions.Count; i++)
-            {
-                Vector3 pos = _rope.transform.InverseTransformPoint(positions[i]);
-                if(i >= _rope.path.m_Points.Count)
-                {
-                  
-                    _rope.path.AddControlPoint(pos, Vector3.zero, Vector3.zero,Vector3.up,1,1,1,1,Color.white,"added " + i.ToString());
-                } 
-                else
-                {
-                    ObiWingedPoint p = _rope.path.m_Points.data[i];
-                    p.position = pos;
-                    _rope.path.m_Points.data[i] = p;
-                }
-            }
-        }
-    }
 
 }

@@ -6,7 +6,7 @@ namespace CommonGame.Controlls
 {
     public class GameControllsMaster : MonoBehaviour
     {
-        [SerializeField] protected IControlls _manager;
+        [SerializeField] protected IControllsManager _manager;
         [SerializeField] private bool IsDebug = true;
         public void Init()
         {
