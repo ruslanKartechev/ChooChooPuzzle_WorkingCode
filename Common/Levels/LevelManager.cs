@@ -1,13 +1,16 @@
 using System.Collections.Generic;
-using System.Collections;
 using UnityEngine;
 using UnityEditor;
-using CommonGame;
+using CommonGame.Events;
 namespace CommonGame
 {
     [ExecuteInEditMode]
     public class LevelManager : MonoBehaviour
     {
+
+        [SerializeField] private LevelLoadChannelSO _levelLoadChannel;
+        
+
         const string PREFS_KEY_LEVEL_ID = "CurrentLevelCount";
         const string PREFS_KEY_LAST_INDEX = "LastLevelIndex";
         public int CurrentLevelCount => PlayerPrefs.GetInt(PREFS_KEY_LEVEL_ID, 0) + 1;
@@ -19,19 +22,44 @@ namespace CommonGame
         [Space(10)]
         [SerializeField] private LevelLoader mLoader;
         public LevelLoader _Loader { get { return mLoader; } }
+        private void Awake()
+        {
+            _levelLoadChannel.LoadNext = NextLevel;
+            _levelLoadChannel.LoadLevel = LoadLevel;
+            _levelLoadChannel.LoadLast = LoadLast;
+            _levelLoadChannel.ReloadCurrentLevel = ReloadCurrent;
+        }
         private void Start()
         {
             if (mLoader == null)
                 mLoader = GetComponent<LevelLoader>();
         }
 
+        public void LoadLevel(int index)
+        {
+            InitLevel(index, false);
+        }
 
-        public void PlayLastLevel()
+        public void LoadLast()
         {
 #if !UNITY_EDITOR
         editorMode = false;
 #endif
             InitLevel(PlayerPrefs.GetInt("LastLevelIndex"), true);
+        }
+        public void ReloadCurrent()
+        {
+            InitLevel(CurrentLevelIndex, false);
+        }
+        public void NextLevel()
+        {
+            if (!editorMode)
+                PlayerPrefs.SetInt(PREFS_KEY_LEVEL_ID, (PlayerPrefs.GetInt(PREFS_KEY_LEVEL_ID) + 1));
+            InitLevel(CurrentLevelIndex + 1);
+        }
+        public void PrevLevel()
+        {
+            InitLevel(CurrentLevelIndex - 1);
         }
         public void InitLevel(int levelIndex, bool indexCheck = true)
         {
@@ -46,19 +74,19 @@ namespace CommonGame
             if (level.lvlPF)
             {
                 CurrentLevelIndex = levelIndex;
-                SetLevelParams(level);
+                SetLevelParams(level, levelIndex);
             }
         }
-        private void SetLevelParams(LevelData level)
+        private void SetLevelParams(LevelData level,int index)
         {
             if (level.lvlPF)
             {
-                mLoader.Init(this);
+                mLoader.Init();
 #if UNITY_EDITOR
                 if (Application.isPlaying)
                 {
                     mLoader.ClearLevel();
-                    mLoader.Load(level);
+                    mLoader.Load(level, index);
                 }
                 else
                 {
@@ -75,20 +103,7 @@ namespace CommonGame
         {
             Levels[levelIndex].lvlPF = null;
         }
-        public void RestartLevel()
-        {
-            InitLevel(CurrentLevelIndex, false);
-        }
-        public void NextLevel()
-        {
-            if (!editorMode)
-                PlayerPrefs.SetInt(PREFS_KEY_LEVEL_ID, (PlayerPrefs.GetInt(PREFS_KEY_LEVEL_ID) + 1));
-            InitLevel(CurrentLevelIndex + 1);
-        }
-        public void PrevLevel()
-        {
-            InitLevel(CurrentLevelIndex - 1);
-        }
+
         private int GetCorrectedIndex(int levelIndex)
         {
             if (editorMode)

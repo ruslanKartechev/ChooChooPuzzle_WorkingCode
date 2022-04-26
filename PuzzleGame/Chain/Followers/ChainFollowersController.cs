@@ -38,7 +38,6 @@ namespace PuzzleGame
         }
         private void ConnectChainFollowers()
         {
-            //if (_followers.Count < 3) { Debug.Log("Min amount of links is 3"); return; }
             _followers[0].ResetLinks();
             _followers[0].AddLink(_followers[1]);
             for (int i = 1; i < _followers.Count; i++)
@@ -78,8 +77,8 @@ namespace PuzzleGame
         #region LeadFollower
         private void InitLead()
         {
-            List<IChainFollower> chain_2 = new List<IChainFollower>(_followers.Count);
-            List<IChainFollower> chain_1 = new List<IChainFollower>(_followers.Count);
+            List<ChainFollower> chain_2 = new List<ChainFollower>(_followers.Count);
+            List<ChainFollower> chain_1 = new List<ChainFollower>(_followers.Count);
 
             for (int i = 0; i < _followers.Count; i++)
             {
@@ -95,28 +94,25 @@ namespace PuzzleGame
         }
         public void SetLeadingFollower(ChainFollower follower)
         {
-            end_1.ReleaseEndNode();
-            end_2.ReleaseEndNode();
+            end_1.ReleaseEndFollower();
+            end_2.ReleaseEndFollower();
             if (follower == null)
             {
                 _leading = null;
                 return;
             }
             _leading = follower;
-            _leading?.ResetFollower();
             _leading?.SetAsLead();
         }
         public ChainFollower ResetLead()
         {
-            _leading?.ReleaseEndNode();
+            _leading?.ReleaseEndFollower();
             if (_leading == null)
                 _leading = end_2;
             else if (_leading == end_1)
                 _leading = end_2;
             else if (_leading == end_2)
                 _leading = end_1;
-            foreach (ChainFollower f in _followers)
-                f.ResetFollower();
             _leading?.SetAsLead();
             return _leading;
         }
@@ -132,7 +128,7 @@ namespace PuzzleGame
             }
             _OnFollowerClick = OnClick;
             _OnFollowerRelease = OnRelease;
-            _OnFollowerInput = MoveByInput;
+            _OnFollowerInput = MoveByInput; 
         }
         public void OnClick(ChainFollower follower)
         {
@@ -143,22 +139,15 @@ namespace PuzzleGame
                 _leading = follower;
             else
                 _leading = end_2;
-            _leading.ResetFollower();
             _leading.SetAsLead();
             _Controller.OnChainContolled();
         }
 
         public void OnRelease()
         {
-            foreach (ChainFollower f in _followers)
-            {
-                f.ClearMoverHistory();
-                //f.OnChainRelease();
-            }
-            end_1.ReleaseEndNode();
-            end_2.ReleaseEndNode();
+            end_1.ReleaseEndFollower();
+            end_2.ReleaseEndFollower();
             StopAllFollowers();
- 
 
             _OnFollowerInput = null;
             _leading = null;
@@ -174,18 +163,23 @@ namespace PuzzleGame
         {
             RecordPosition();
             _Controller.OnPositionChanged();
-            _Controller.OnLeadNodeSet(_leading.currentNode); ///
         }
         public void OnLeadNodeSet(SplineNode node)
         {
             _Controller.OnLeadNodeSet(node);
         }
-
         private void StopAllFollowers()
         {
             foreach (ChainFollower f in _followers)
                 f.StopNodeSnapping();
         }
+        public ChainFollower GetOtherEnd(ChainFollower caller)
+        {
+            if (caller == end_1) return end_2;
+            else if (caller == end_2) return end_1;
+            return null;
+        }
+
 
         #region INFO
         public bool IsChainOccupied(SplineNode node)
@@ -249,8 +243,7 @@ namespace PuzzleGame
                 case ConstraintMessages.WrongAngle:
                     break;
                 case ConstraintMessages.Blocked:
-                    end_1.BlockedLightEffect();
-                    end_2.BlockedLightEffect();
+
                     break;
                 case ConstraintMessages.CloseContanctBlock:
                     if (_leading == null) { Debug.Log("Leading is null, can't show cross"); return; }

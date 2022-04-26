@@ -11,8 +11,6 @@ namespace PuzzleGame
         public ConstraintResult CheckConstraint(List<IConstrained> constraints, Vector2 input)
         {
             ConstraintData data = new ConstraintData();
-     
-            
             data.ScreenDirection = input;
             data.chainPositions = chain.GetChainPosition();
             return CheckConstraint(constraints,data);

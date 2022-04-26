@@ -7,6 +7,7 @@ namespace PuzzleGame
 {
     public class SegmentsModelsManager : MonoBehaviour
     {
+#if UNITY_EDITOR
         public float Scale = 1f;
         [Space(5)]
         public bool UseScale3 = false;
@@ -60,11 +61,12 @@ namespace PuzzleGame
             Rigidbody rb = model.GetComponent<Rigidbody>();
             if (rb == null)
                 rb = model.gameObject.AddComponent<Rigidbody>();
-            rb.isKinematic = true;
+            rb.isKinematic = false;
+            rb.useGravity = false;
             Collider c = model.GetComponent<Collider>();
             if (c == null)
                 c = model.gameObject.AddComponent<BoxCollider>();
-            c.isTrigger = true;
+          //  c.isTrigger = true;
             IChainLink link = model.GetComponentInParent<IChainLink>();
             if (link != null)
                 link.InitComponents(new ChainLinkComponents(model.gameObject, rb, c));
@@ -128,6 +130,7 @@ namespace PuzzleGame
             link.transform.parent = transform;
             link.transform.localPosition = Vector3.zero;
             ChainLink l = link.AddComponent<ChainLink>();
+
             GameObject mod = PrefabUtility.InstantiatePrefab(_model) as GameObject;
             mod.transform.parent = link.transform;
             mod.transform.localEulerAngles = EulerAngles;
@@ -137,6 +140,8 @@ namespace PuzzleGame
 
             return link;
         }
+
+#endif
     }
 
 

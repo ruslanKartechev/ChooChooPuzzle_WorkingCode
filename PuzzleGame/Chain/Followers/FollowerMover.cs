@@ -102,7 +102,7 @@ namespace PuzzleGame
                 }
             }
         }
-        private IEnumerator NodeMover(SplineNode node, Action<SplineNode> onEnd = null)
+        private IEnumerator NodeMover(SplineNode node, Action onEnd = null)
         {
             if (node == null) { Debug.LogError("Null node passed"); yield break; }
             StopBouncing();
@@ -110,6 +110,7 @@ namespace PuzzleGame
             Vector3 end = node._position;
             float elapsed = 0f;
             float time = (end - start).magnitude / _settings.TesterSpeed;
+            if (time == 0) yield break;
             _isBusy = true;
             HandleAcceleration();
             while (elapsed <= time)
@@ -120,6 +121,7 @@ namespace PuzzleGame
             }
             transform.position = end;
             NodeReachedNotifier?.Invoke(node);
+            onEnd?.Invoke();
         }
 
 
@@ -140,8 +142,6 @@ namespace PuzzleGame
         {
             if (_bouncing == null)
                 _bouncing = StartCoroutine(Bouncing(target, percent, time));
-            else
-                Debug.Log("Already bouncing");
         }
         private void StopBouncing()
         {

@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using CommonGame.Events;
 
 namespace CommonGame.Sound
 {
     public class SoundEffectManager : MonoBehaviour
     {
+        [SerializeField] private SoundFXChannelSO _soundChannel;
         [Header("Sound Data")]
         [SerializeField] private SoundData sounds;
         
@@ -25,6 +26,9 @@ namespace CommonGame.Sound
 
         public void Init()
         {
+            _soundChannel.OnPlayFX = PlaySingleTime;
+            _soundChannel.OnPlayFXLoop = StartSoundEffect;
+            _soundChannel.OnStopFXLoop = StopLoopedEffect;
             if (sounds == null)
                 Debug.Log("</color=red>SoundData is not assigned </color>");
             sourceManager.Init();

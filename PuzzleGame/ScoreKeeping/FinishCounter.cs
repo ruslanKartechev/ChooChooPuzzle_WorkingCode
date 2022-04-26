@@ -7,32 +7,28 @@ namespace PuzzleGame
 {
     public class FinishCounter
     {
-        public List<ChainNumber> chains = new List<ChainNumber>();
-        public List<ChainNumber> finishes = new List<ChainNumber>();
+        private List<ChainNumber> _started = new List<ChainNumber>();
+        private List<ChainNumber> _finished = new List<ChainNumber>();
         public Action OnAllRegistered;
         public void Refresh()
         {
-            chains = new List<ChainNumber>();
-            finishes = new List<ChainNumber>();
+            _started.Clear();
+            _finished.Clear();
         }
         
-        public void RegisterFinish(ChainNumber num)
+        public void Register(ChainNumber num)
         {
-            if (finishes.Contains(num) == false)
-                finishes.Add(num);
+            _started.Add(num);
         }
-        public void FinishReached(ChainNumber num)
+        public void SetFinished(ChainNumber num)
         {
-            if (chains.Contains(num) == false)
-            {
-                if (finishes.Contains(num) == true)
-                    chains.Add(num);
-                CheckFinishAll();
-            }
+            _finished.Add(num);
+
+            CheckFinishAll();
         }
         public void CheckFinishAll()
         {
-            if (finishes.Count != 0 && (finishes.Count == chains.Count))
+            if (_finished.Count != 0 && (_finished.Count >= _started.Count))
                 OnAllRegistered?.Invoke();
         }
     }

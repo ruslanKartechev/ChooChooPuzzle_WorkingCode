@@ -44,8 +44,8 @@ namespace PuzzleGame
 
             if(result == null)
             {
-                //Debug.Log("<color=blue> DID not find Traditionally </color>");
-                result = FindByProjection(clearedOptions, from.transform.position,input);
+                result = FindByProjection(nodes, from.transform.position, input);
+               // result = FindByProjection(clearedOptions, from.transform.position,input);
                 if(result == null)
                 {
                     result = FindByProjection(nodes, from.transform.position, input);
@@ -62,7 +62,7 @@ namespace PuzzleGame
             SplineNode next = null;
             if (nodes == null) DebugSeeker("nodes are null");
             if (refPos == null) DebugSeeker("ref pos is null");
-            if (nodes.Count == 1) { DebugSeeker("only one res return"); Debug.Log("NODE: " + nodes[0].gameObject.name); return nodes[0]; }
+            if (nodes.Count == 1) { DebugSeeker("only one res return"); return nodes[0]; }
             if (input.y >= 0)
                 _options = nodes.FindAll(t => (t != null)
                 && GetScreenPos(t.transform.position).y >= GetScreenPos(refPos.position).y);
@@ -105,7 +105,7 @@ namespace PuzzleGame
             SplineNode next = null;
             if (nodes == null) DebugSeeker("nodes are null");
             if (refPos == null) DebugSeeker("ref pos is null");
-            if (nodes.Count == 1) { DebugSeeker("only one res return HOR"); Debug.Log("NODE: " + nodes[0].gameObject.name); DebugSeeker("only one res return"); return nodes[0]; }
+            if (nodes.Count == 1) { DebugSeeker("only one res return HOR"); DebugSeeker("only one res return"); return nodes[0]; }
 
             if (input.x >= 0)
                 _options = nodes.FindAll(t => (t != null)

@@ -12,6 +12,13 @@ namespace PuzzleGame
         private ChainEffect_Jump _settings;
         private Action<ChainSegmentData> onSegmentJump;
         private Action onEffectEnd;
+
+        private bool Stop = false;
+        public void StopEffect()
+        {
+            Stop = true;
+        }
+
         public JumpEffectHandler(ChainEffect_Jump settings, List<ChainSegmentData> segments, Action<ChainSegmentData> onSegmentJump, Action onEffectEnd)
         {
             _settings = settings; _Segments = segments; this.onSegmentJump = onSegmentJump; this.onEffectEnd = onEffectEnd;
@@ -21,6 +28,7 @@ namespace PuzzleGame
         {
             JumpByType();
         }
+
         private async void JumpByType()
         {
             List<Task> tasks = new List<Task>();
@@ -61,6 +69,8 @@ namespace PuzzleGame
             float elapsed = 0;
             while (elapsed <= time)
             {
+                if (Stop == true)
+                    return;
                 float t = elapsed / time;
                 Vector3 pos = Bezier.GetPointQuadratic(start, inflection, end, t);
                 controllPoint.transform.position = pos;
@@ -68,10 +78,7 @@ namespace PuzzleGame
                 await Task.Yield();
             }
             controllPoint.transform.position = Bezier.GetPointQuadratic(start, inflection, end, 1);
-
         }
-
-
 
         private async Task JumpChain(ChainSegmentData data)
         {
@@ -94,6 +101,8 @@ namespace PuzzleGame
             }
             while (elapsed <= time)
             {
+                if (Stop == true)
+                    return;
                 float t = elapsed / time;
                 SetLinksPositions(t);
                 elapsed += Time.deltaTime ;
@@ -118,6 +127,8 @@ namespace PuzzleGame
             float factor = 1f;
             while(elapsed <= time)
             {
+                if (Stop == true)
+                    return;
                 factor = Mathf.Lerp(1f, endFactor, elapsed / time);
                 target.localScale = startScale * factor;
                 elapsed += Time.deltaTime;
@@ -125,6 +136,8 @@ namespace PuzzleGame
             }
             target.localScale = startScale * endFactor;
         }
+
+       
 
     }
 }

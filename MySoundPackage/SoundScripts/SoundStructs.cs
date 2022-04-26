@@ -11,7 +11,8 @@ namespace CommonGame.Sound
         TrainMove,
         FinishCorrect,
         FinishWrong,
-        BackTrack_1
+        BackTrack_1,
+        SpaghettiEat
     }
 
 

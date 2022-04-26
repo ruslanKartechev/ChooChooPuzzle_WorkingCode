@@ -1,33 +1,28 @@
-using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
-
+using CommonGame.Events;
 namespace CommonGame
 {
     public class LevelLoader : MonoBehaviour
     {
-        private LevelManager manager;
+        [SerializeField] private LevelLoadChannelSO _levelLoadedSO;
         public Transform levelPoint;
-        public void Init(LevelManager _manager)
+        public void Init()
         {
-            manager = _manager;
             if (levelPoint == null)
                 levelPoint = transform;
         }
-        public void Load(LevelData data)
+        public void Load(LevelData data, int index)
         {
-            StartCoroutine(Loading(data));
+            StartCoroutine(Loading(data,index));
         }
 
-        private IEnumerator Loading(LevelData data)
+        private IEnumerator Loading(LevelData data, int index)
         {
             GameObject level = Instantiate(data.lvlPF, levelPoint);
-            LevelInstance currentData = level.GetComponent<LevelInstance>();
-            GameManager.Instance._data._currentLevel = currentData;
-
+            //LevelInstance currentData = level.GetComponent<LevelInstance>();
             yield return null;
-            GameManager.Instance._events.LevelLoaded.Invoke();
-
+            _levelLoadedSO?.OnLevelLoaded.Invoke(index);
         }
 
         public void ClearLevel()

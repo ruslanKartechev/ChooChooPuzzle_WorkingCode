@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using CommonGame.Events;
 using UnityEngine;
 using CommonGame;
 namespace PuzzleGame
@@ -8,6 +7,7 @@ namespace PuzzleGame
     public class FinishEffectsController : MonoBehaviour, IEffect
     {
         private FinishEffectsData Data;
+        [SerializeField] private LevelFinishChannelSO _levelFinishChannel;
         private void Start()
         {
          
@@ -15,7 +15,7 @@ namespace PuzzleGame
         public void Init()
         {
             Data = GetComponent<FinishEffectsData>();
-            GameManager.Instance._events.LevelEndreached.AddListener(OnLevelEnd);
+            _levelFinishChannel.OnLevelFinished += OnLevelEnd;
             Data.ConfettiManager.InitParticles(Data.Confetti);
         }
         public void Play()

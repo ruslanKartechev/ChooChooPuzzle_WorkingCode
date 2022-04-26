@@ -1,28 +1,26 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using UnityEngine;
-using CommonGame.Sound;
-using BomberGame.Data;
+using CommonGame.Events;
 namespace CommonGame.Sound
 {
     public class MySoundPlayer : MonoBehaviour, ISoundEffect
     {
         public SoundNames _sound;
-        //  [SerializeField] private string mySoundName;
+        public SoundFXChannelSO _soundChannel;
 
         public void PlayEffectOnce()
         {
-            GameManager.Instance._sounds.PlaySingleTime(_sound.ToString());
+            _soundChannel?.RaiseEventPlay(_sound.ToString());
         }
 
         public void StartEffect()
         {
-            GameManager.Instance._sounds.StartSoundEffect(_sound.ToString());
+            _soundChannel?.RaiseEventStartLoop(_sound.ToString());
         }
 
         public void StopEffect()
         {
-            GameManager.Instance._sounds.StopLoopedEffect(_sound.ToString());
+            _soundChannel?.RaiseEventStopLoop(_sound.ToString());
         }
     }
 }

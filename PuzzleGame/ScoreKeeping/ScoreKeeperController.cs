@@ -1,8 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using CommonGame;
 using System;
+using CommonGame.Events;
 namespace PuzzleGame {
 
     public interface ICounter
@@ -12,6 +12,8 @@ namespace PuzzleGame {
     }
     public class ScoreKeeperController : MonoBehaviour, ICounter
     {
+        [SerializeField] private LevelLoadChannelSO _levelLoadChannel;
+        [Space(10)]
         private MovesTracker _movesKeeper;
         private Action ValueChanged;
         private List<Action> _listeners = new List<Action>();
@@ -20,15 +22,14 @@ namespace PuzzleGame {
             ValueChanged = OnCounterTick;
             _movesKeeper = new MovesTracker();
             _movesKeeper.Init(ValueChanged);
-            GameManager.Instance._events.LevelLoaded.AddListener(OnNewLevel);
-            GameManager.Instance._events.MoveMade.AddListener(OnMoveMade);
+            _levelLoadChannel.OnLevelLoaded += OnNewLevel;
         }
 
-        private void OnNewLevel()
+        private void OnNewLevel(int index)
         {
             _movesKeeper.Refresh();
         }
-        private void OnMoveMade()
+        public void OnMoveMade()
         {
             _movesKeeper.AddCount();
         }

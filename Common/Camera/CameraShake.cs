@@ -1,15 +1,9 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace CommonGame
 {
-    [System.Serializable]
-    public class CamShakeSettings
-    {
-        public float Duration;
-        public float Magnitude;
-    }
+
     public class CameraShake : MonoBehaviour
     {
         private CamShakeSettings _settings;

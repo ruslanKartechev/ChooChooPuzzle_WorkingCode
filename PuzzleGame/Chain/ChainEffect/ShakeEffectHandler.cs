@@ -25,9 +25,11 @@ namespace PuzzleGame
             List<Task> tasks = new List<Task>();
             foreach (ChainSegmentData seg in segments)
             {
+                if (seg._links == null) continue;
                 foreach (ChainLink link in seg._links)
                 {
-                    tasks.Add(ShakeOne(link.Model.transform, _settings.ShakeTime, _settings.ShakeMagnitude));
+                    if (link.Model != null)
+                        tasks.Add(ShakeOne(link.Model.transform, _settings.ShakeTime, _settings.ShakeMagnitude));
                 }
             }
             await Task.WhenAll(tasks);

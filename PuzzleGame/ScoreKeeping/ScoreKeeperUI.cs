@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using CommonGame;
+using CommonGame.UI;
 namespace PuzzleGame
 {
     public class ScoreKeeperUI : MonoBehaviour
@@ -18,7 +18,7 @@ namespace PuzzleGame
         public void OnCountChange()
         {
             int num = counter.GetCount();
-            GameManager.Instance._ui.progressPanel.OutputNumber(num);
+            UIManager.Instance.progressPanel.OutputNumber(num);
         }
         
 

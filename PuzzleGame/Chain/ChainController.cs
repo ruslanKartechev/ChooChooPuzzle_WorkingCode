@@ -1,19 +1,22 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
 using CommonGame;
 using CommonGame.Sound;
 using CommonGame.UI;
+using CommonGame.Events;
 namespace PuzzleGame
 {
 
     [DefaultExecutionOrder(100)]
     public class ChainController : MonoBehaviour
     {
+        [SerializeField] private LevelStartChannelSO _levelStartChannel;
+        [SerializeField] private LevelFinishChannelSO _levelFinishChannel;
+        [SerializeField] private SoundFXChannelSO _soundFXChannel;
+        [Space(10)]
         [SerializeField] private ChainSettings settings;
         [Space(10)]
+        [SerializeField] private bool IsEatable = true;
         [SerializeField] private ChainNumber _number;
         [Header("Pivot Followers")]
         [Space(10)]
@@ -22,6 +25,11 @@ namespace PuzzleGame
         [SerializeField] private List<SplineNode> _nodes = new List<SplineNode>();
         [Header("Chain segment managers")]
         [SerializeField] private List<ChainSegmentManager> _chainSegments = new List<ChainSegmentManager>();
+        [Space(10)]
+        [SerializeField] ChainFinishEffectBase ChainFinishEffect;
+        [Space(10)]
+        public bool InitSegmentPivots = true;
+
         private ChainEffectsManager _Effects;
         private PositionRecorder _recorder;
 
@@ -52,8 +60,8 @@ namespace PuzzleGame
             SetChainPositions();
 
             _recorder = new PositionRecorder();
-            GameManager.Instance._events.LevelStarted.AddListener(OnLevelStart);
-            GameManager.Instance._events.LevelEndreached.AddListener(OnLevelEnd);
+            _levelStartChannel.OnLevelStarted.AddListener(OnLevelStart);
+            _levelFinishChannel.OnLevelFinished += OnLevelEnd;
         }
 
         private void OnLevelStart()
@@ -63,8 +71,6 @@ namespace PuzzleGame
 
         private void OnLevelEnd()
         {
-            GameManager.Instance._events.LevelStarted.RemoveListener(OnLevelStart);
-            GameManager.Instance._events.LevelFinished.RemoveListener(OnLevelEnd);
             _followersController.Deactivate();
         }
         #endregion
@@ -74,12 +80,14 @@ namespace PuzzleGame
         public void OnChainContolled()
         {
             _Effects?.ExecuteEffect(ChainEffects.Start, _followersController.GetChainPosition());
-            FinishMatcherController.Instance.OnChainSelected(_number);
+            if(IsEatable)
+                FinishMatcherController.Instance.OnChainSelected(_number);
         }
         public void OnChainReleased()
         {
             _Effects?.ExecuteEffect(ChainEffects.Stop, _followersController.GetChainPosition());
-            FinishMatcherController.Instance.OnChainDeselected(_number);
+            if(IsEatable)
+                FinishMatcherController.Instance.OnChainDeselected(_number);
         }
         #endregion
 
@@ -106,8 +114,6 @@ namespace PuzzleGame
         #endregion
         public void OnPositionChanged()
         {
-            GameManager.Instance._events.MoveMade.Invoke();
-            GameManager.Instance._sounds.PlaySingleTime(SoundNames.TrainMove.ToString());
         }
 
         #region NodeTypesHandler
@@ -123,42 +129,59 @@ namespace PuzzleGame
             }
         }
 
+        private FinishNode mFinish;
         public void HandleFinishNode(SplineNode node)
         {
-            FinishNode finish = (FinishNode)node;
-            if (finish == null) return;
-            if (finish.CompareNumbers(_number) == true)
+            mFinish = (FinishNode)node;
+            if (mFinish == null) return;
+            if (mFinish.CompareNumbers(_number) == true && IsEatable)
             {
                 Debug.Log("<color=green> Finish Found: " + _number.ToString() + " </color>");
                 foreach (ChainFollower f in _followers)
                     f.DisableFollower();
                 _followersController.InitFollowerActions(true);
-                _Effects?.ExecuteEffect(ChainEffects.Stop, _followersController.GetChainPosition());
-                StopMovingLinks();
-                _Effects.JumpTo(node.transform,OnSegmentEaten, OnChainEaten);
+
+                if (ChainFinishEffect != null)
+                {
+                    ChainFinishEffect.OnEffectEnd = OnFinishEffectEnd;
+                    ChainFinishEffect.ExecuteEffect(mFinish.FinishPoint.position);
+                }
+                else
+                {
+                    _Effects?.ExecuteEffect(ChainEffects.Stop, _followersController.GetChainPosition());
+                    _Effects.JumpTo(mFinish.FinishPoint, OnSegmentEffectEnd, OnFinishEffectEnd);
+                }
+                mFinish._FinishView?.OnReached();
+               // CameraController.Instance.MoveToFinishCP(_number);
                 FinishMatcherController.Instance.ChainFinished(_number);
-                GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishCorrect.ToString());
+                _soundFXChannel.RaiseEventPlay(SoundNames.SpaghettiEat.ToString());
             }
             else
             {
                 Debug.Log("<color=red> Wrong finish " + _number.ToString() + " </color>");
-                GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
+                mFinish?._FinishView.OnWrong();
+                HitCrossManager.Instance.ShowCross(node.transform.position);
+              //  CameraController.Instance.Shake();
+                _soundFXChannel.RaiseEventPlay(SoundNames.FinishWrong.ToString());
             }
         }
         
-        private void OnSegmentEaten(ChainSegmentData segment)
+        public void OnSegmentEffectEnd(ChainSegmentData segment)
         {
-            segment._links[0].gameObject.SetActive(false);
-        }
 
-        private void OnChainEaten()
+        }
+        public void OnFinishEffectEnd()
         {
-            foreach(ChainFollower f in _followers)
+            mFinish?._FinishView?.OnCompleted();
+            foreach (ChainFollower f in _followers)
             {
                 f.DisableFollower();
             }
-            transform.parent.gameObject.SetActive(false);
+            _soundFXChannel.RaiseEventPlay(SoundNames.FinishCorrect.ToString());
             FinishMatcherController.Instance.ChainCompleted(_number);
+          //  CameraController.Instance.MoveToDefaultPos();
+            StopMovingLinks();
+            transform.parent.gameObject.SetActive(false);
         }
         #endregion
 
@@ -171,13 +194,12 @@ namespace PuzzleGame
                     _Effects.ExecuteEffect(ChainEffects.Shake, _followersController.GetChainPosition());
                     break;
                 case ConstraintMessages.Blocked:
-                    GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
+                    _soundFXChannel.RaiseEventPlay(SoundNames.FinishWrong.ToString());
                     break;
                 case ConstraintMessages.CloseContanctBlock:
                     _Effects.ExecuteEffect(ChainEffects.Shake, _followersController.GetChainPosition());
-                    CameraController.Instance.Shake();
-                    GameManager.Instance._sounds.PlaySingleTime(SoundNames.FinishWrong.ToString());
-                    if (_followersController.LeadingFollower== null) { Debug.Log("Leading is null, can't show cross"); return; }
+                  //  CameraController.Instance.Shake();
+                    _soundFXChannel.RaiseEventPlay(SoundNames.FinishWrong.ToString());
                     HitCrossManager.Instance.ShowCross(caller.transform.position);
                     break;
             }
@@ -249,6 +271,7 @@ namespace PuzzleGame
         }
         private void SetSegmentPivots(ChainSegmentManager segment, int index)
         {
+            if (InitSegmentPivots == false) return;
             if(index == 0)
             {
                 segment.InitSegment(_followers[0].transform, _followers[1].transform);

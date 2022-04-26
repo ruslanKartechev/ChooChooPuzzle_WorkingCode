@@ -4,11 +4,15 @@ using UnityEngine;
 namespace PuzzleGame
 {
 
-    public abstract class FinishAnimator
+    public abstract class FinishAnimator : MonoBehaviour
     {
         public abstract void Init();
-        public abstract void Activate();
-        public abstract void Deactivate();
+        public abstract void SetParticlesHandle(object particles);
+        public abstract void PlayIdle();
+        public abstract void PlayActive();
+        public abstract void OnFinishEnd();
+        public abstract void Wrong();
+        public abstract void Correct();
     }
 
   
@@ -24,15 +28,29 @@ namespace PuzzleGame
         {
             _anim.Play("Idle");
         }
-        public override void Activate()
+        public override void PlayIdle()
         {
             _anim.Play("Active");
         }
-        public override void Deactivate()
+        public override void PlayActive()
         {
             _anim.Play("Idle");
 
         }
+        public override void Wrong()
+        {
+        }
+        public override void Correct()
+        {
+        }
+        public override void SetParticlesHandle(object particles)
+        {
 
+        }
+
+        public override void OnFinishEnd()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

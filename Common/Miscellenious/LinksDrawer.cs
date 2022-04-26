@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using System.Linq;
 namespace PuzzleGame
 {
     public static class LinksDrawer
     {
+#if UNITY_EDITOR
         public static void DrawLinks(SplineNode me)
         {
             Handles.color = Color.red;
@@ -23,5 +23,7 @@ namespace PuzzleGame
                 Handles.DrawAAPolyLine(20, ends);
             }
         }
+#endif
     }
+
 }

@@ -8,5 +8,6 @@ namespace CommonGame.Data
     public class DataManager : MonoBehaviour
     {
         public LevelInstance _currentLevel;
+        public int CurrentLevelIndex;
     }
 }

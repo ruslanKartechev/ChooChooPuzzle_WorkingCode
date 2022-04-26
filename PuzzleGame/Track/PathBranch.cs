@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using UnityEditorInternal;
 
 namespace PuzzleGame
 {
+#if UNITY_EDITOR
     public enum AddType { last,first}
     public class PathBranch : MonoBehaviour, IPointsSource
     {
@@ -254,7 +254,7 @@ namespace PuzzleGame
     }
 
 
-   
 
 
+#endif
 }
