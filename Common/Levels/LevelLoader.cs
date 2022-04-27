@@ -6,6 +6,7 @@ namespace CommonGame
     public class LevelLoader : MonoBehaviour
     {
         [SerializeField] private LevelLoadChannelSO _levelLoadedSO;
+        [SerializeField] private GameStateSO _gameStateSO;
         public Transform levelPoint;
         public void Init()
         {
@@ -22,6 +23,7 @@ namespace CommonGame
             GameObject level = Instantiate(data.lvlPF, levelPoint);
             //LevelInstance currentData = level.GetComponent<LevelInstance>();
             yield return null;
+            _gameStateSO?.SetLevelIndex(index);
             _levelLoadedSO?.OnLevelLoaded.Invoke(index);
         }
 

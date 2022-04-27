@@ -29,7 +29,6 @@ namespace CommonGame
 
         public void Shake()
         {
-            Debug.Log("Shake called");
             _shakeManager.Shake();
         }
         public void SetCameraCP(Transform target, ChainNumber number)

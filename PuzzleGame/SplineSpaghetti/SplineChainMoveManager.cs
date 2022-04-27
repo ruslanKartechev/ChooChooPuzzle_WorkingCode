@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 using CommonGame.Events;
 using CommonGame.UI;
 namespace PuzzleGame
-{ 
+{
+
     public class SplineChainMoveManager : SplineMoverBase
     {
         [SerializeField] private SoundFXChannelSO _soundFXChannel;
@@ -30,13 +31,6 @@ namespace PuzzleGame
         private Action<Vector2> _InputHandler;
         private bool IsActive;
         private Coroutine _raycasting;
-        #region Dragging
-        enum MoveDirection { forward, backward }
-        enum InputDir { up, down, right, left }
-
-        private MoveDirection LastMoveDir;
-        private InputDir LastProperInput;
-        #endregion
 
         public void Init(SplineChainMoveSettings settings)
         {
@@ -44,7 +38,6 @@ namespace PuzzleGame
             _cam = Camera.main;
             _leftNode.Init(this);
             _rightNode.Init(this);
-            _InputHandler = OnProperMove;
             IsActive = true;
         }
         public void SetStartPositions(SplineComputer startSpline)
@@ -205,6 +198,8 @@ namespace PuzzleGame
         {
             if (forward)
             {
+                _moveDirection = MoveDirection.forward;
+
                 rightPercent += percentDelta * Time.deltaTime * 10;
                 leftPercent += percentDelta * Time.deltaTime * 10;
                 if(rightPercent <= 1)
@@ -216,6 +211,8 @@ namespace PuzzleGame
             }
             else
             {
+                _moveDirection = MoveDirection.backward;
+
                 rightPercent -= percentDelta * Time.deltaTime * 10;
                 leftPercent -= percentDelta * Time.deltaTime * 10;
                 if (leftPercent >= 0)
@@ -223,6 +220,7 @@ namespace PuzzleGame
                     _rightNode.SetPosition(rightPercent);
                     _leftNode.SetPosition(leftPercent);
                     OnPositionChaned();
+
                 }
             }
         }
@@ -292,152 +290,6 @@ namespace PuzzleGame
 
 
 
-
-
-        #region dragging
-        public void OnInput(Vector2 inputVector)
-        {
-            _InputHandler?.Invoke(inputVector);
-        }
-
-        private void OnProperMove(Vector2 inputVector)
-        {
-            if (Mathf.Abs(inputVector.y) > Mathf.Abs(inputVector.x))
-            {
-                if (GetVertNodeDistance() >= _settings.DirChangeThreshold)
-                {
-                    MoveVertPrior(inputVector.y);
-                }
-            }
-            else
-            {
-                if (GetHorNodeDistance() >= _settings.DirChangeThreshold)
-                {
-                    MoveHorPrior(inputVector.x);
-                }
-            }
-        }
-        #region Depricated
-        //private void OnStuckMove(Vector2 input)
-        //{
-        //    Debug.Log("2");
-        //    InputDir current = GetInputDir(input);
-        //    if(current == LastProperInput)
-        //    {
-        //        float rightPercent = _rightNode.GetPercent();
-        //        float leftPercent = _leftNode.GetPercent();
-        //        if(LastMoveDir == MoveDirection.forward)
-        //            MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, true);
-        //        else if(LastMoveDir == MoveDirection.backward)
-        //            MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, false);
-        //    }
-        //    else
-        //    {
-        //        Debug.Log("resume normal");
-        //       // OnProperMove(input);
-        //        OnMove = OnProperMove;
-        //    }
-        //}
-
-        //private InputDir GetInputDir(Vector2 input)
-        //{
-        //    if(Mathf.Abs(input.y) >= Mathf.Abs(input.x))
-        //    {
-        //        if (input.y >= 0)
-        //            return InputDir.up;
-        //        else
-        //            return InputDir.down;
-        //    }
-        //    else
-        //    {
-        //        if (input.x >= 0)
-        //            return InputDir.right;
-        //        else
-        //            return InputDir.left;
-        //    }
-        //}
-        #endregion
-
-        private void MoveVertPrior(float yInput)
-        {
-            float rightPercent = _rightNode.GetPercent();
-            float leftPercent = _leftNode.GetPercent();
-            if (yInput == 0) return;
-            if (yInput >= 0)
-            {
-                LastProperInput = InputDir.up;
-                if (_rightNode.ScreenPos().y >= _leftNode.ScreenPos().y)
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, true);
-                    LastMoveDir = MoveDirection.forward;
-                }
-                else
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, false);
-                    LastMoveDir = MoveDirection.backward;
-                }
-            }
-            else
-            {
-                LastProperInput = InputDir.down;
-                if (_rightNode.ScreenPos().y < _leftNode.ScreenPos().y)
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, true);
-                    LastMoveDir = MoveDirection.forward;
-                }
-                else
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, false);
-                    LastMoveDir = MoveDirection.backward;
-                }
-            }
-
-        }
-
-        private void MoveHorPrior(float xInput)
-        {
-            float rightPercent = _rightNode.GetPercent();
-            float leftPercent = _leftNode.GetPercent();
-            if (xInput == 0) return;
-            if (xInput >= 0)
-            {
-                LastProperInput = InputDir.right;
-                if (_rightNode.ScreenPos().x >= _leftNode.ScreenPos().x)
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, true);
-                    LastMoveDir = MoveDirection.forward;
-                }
-                else
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, false);
-                    LastMoveDir = MoveDirection.backward;
-                }
-            }
-            else
-            {
-                LastProperInput = InputDir.left;
-                if (_rightNode.ScreenPos().x < _leftNode.ScreenPos().x)
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, true);
-                    LastMoveDir = MoveDirection.forward;
-                }
-                else
-                {
-                    MoveNodes(rightPercent, leftPercent, _currentSplineSpeed, false);
-                    LastMoveDir = MoveDirection.backward;
-                }
-            }
-
-        }
-        private float GetVertNodeDistance()
-        {
-            return Mathf.Abs((_rightNode.ScreenPos() - _leftNode.ScreenPos()).y);
-        }
-        private float GetHorNodeDistance()
-        {
-            return Mathf.Abs((_rightNode.ScreenPos() - _leftNode.ScreenPos()).x);
-        }
-        #endregion
 
 
     }

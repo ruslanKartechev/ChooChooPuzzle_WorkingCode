@@ -33,11 +33,14 @@ namespace PuzzleGame
         }
         public void Enable()
         {
-            _moveManager.SplineChanged += SetCurrentSpline;
-            _moveManager.PositionChanged += UpdatePositions;
-            for (int i = 0; i < _catchers.Count; i++)
+            if (Application.isPlaying)
             {
-                _catchers[i].gameObject.SetActive(true);
+                _moveManager.SplineChanged += SetCurrentSpline;
+                _moveManager.PositionChanged += UpdatePositions;
+                for (int i = 0; i < _catchers.Count; i++)
+                {
+                    _catchers[i].gameObject.SetActive(true);
+                }
             }
         }
         public void Disable()

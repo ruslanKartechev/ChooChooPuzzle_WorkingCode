@@ -19,9 +19,8 @@ namespace CommonGame
         public LevelManager levelManager;
         [Header("General")]
         public SoundEffectManager _sounds;
-        public DataManager _data;
-        public ServerDataLoader _dataLoader;
         public InputController _controlls;
+        public UIManager _ui;
 
         private void Start()
         {
@@ -32,7 +31,7 @@ namespace CommonGame
                 _sounds.Init();
             }
             if (UseUI)
-                UIManager.Instance.Init();
+                _ui?.Init();
             if (levelManager == null) levelManager = FindObjectOfType<LevelManager>();
             levelManager.LoadLast();
             _controlls.Init();

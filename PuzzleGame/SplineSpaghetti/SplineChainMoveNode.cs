@@ -24,6 +24,7 @@ namespace PuzzleGame
 
         public void OnMoveStart()
         {
+            Debug.Log("CLICKED ");
             _moveManager.OnClicked();
         }
 

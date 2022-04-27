@@ -17,16 +17,12 @@ namespace CommonGame.Controlls
         [SerializeField] private int MaxRad;
         [SerializeField] private float Sensitivity;
 
-        private StickControllsPanel _ui;
         private Coroutine _controllStickHandler;
         private IInputHandler _inputHandler;
 
         #region Init
         public override void Init(object ui)
         {
-            _ui = (StickControllsPanel)ui;
-            _ui.MaxRad = MaxRad;
-            _ui.Sensitivity = Sensitivity;
         }
         public override void SetInputHandler(Object inpHandler)
         {
@@ -46,11 +42,11 @@ namespace CommonGame.Controlls
         public override void HideControlls()
         {
             StopInputCheck();
-            _ui.HidePanel(true);
+      
         }
         public override void ShowControlls()
         {
-            _ui.ShowPanel(true);
+      
         }
         protected override void StartInputCheck()
         {
@@ -81,20 +77,11 @@ namespace CommonGame.Controlls
         #region Events
         public override void OnClick()
         {
-            switch (_ui.OnClick())
-            {
-                case InputTypes.ControllStick:
-                    StartControllStickHandler();
-                    break;
-                case InputTypes.AttackButton:
-                    OnAttackButton();
-                    break;
-            }
+
         }
         public override void OnRelease()
         {
-            if (_ui != null)
-                _ui.OnRelease();
+
         }
         private void OnAttackButton()
         {
@@ -105,7 +92,6 @@ namespace CommonGame.Controlls
         #region ControllStick
         protected void StartControllStickHandler()
         {
-            _ui.StartStickMovement();
             StopControllStickHandler();
             _controllStickHandler = StartCoroutine(ControllStickHandler());
         }
@@ -117,7 +103,7 @@ namespace CommonGame.Controlls
         {
             while (true)
             {
-                _inputHandler.OnInput(_ui.GetDirVector());
+
                 yield return null;
             }
         }

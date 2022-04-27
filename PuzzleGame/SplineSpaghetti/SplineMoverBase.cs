@@ -4,6 +4,7 @@ using UnityEngine;
 using Dreamteck.Splines;
 namespace PuzzleGame
 {
+    public enum MoveDirection { forward, backward }
     public class SplineMoverBase : MonoBehaviour
     {
         #region Events
@@ -12,7 +13,8 @@ namespace PuzzleGame
         public event Notifier PositionChanged;
         public event SplineChangeCallback SplineChanged;
         #endregion
-
+        protected MoveDirection _moveDirection;
+        public MoveDirection MovingDirection { get { return _moveDirection; } }
         protected virtual void OnMoveStarted()
         {
             MoveStarted?.Invoke();

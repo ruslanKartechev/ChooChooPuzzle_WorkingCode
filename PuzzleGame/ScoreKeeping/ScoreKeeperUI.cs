@@ -18,7 +18,7 @@ namespace PuzzleGame
         public void OnCountChange()
         {
             int num = counter.GetCount();
-            UIManager.Instance.progressPanel.OutputNumber(num);
+
         }
         
 

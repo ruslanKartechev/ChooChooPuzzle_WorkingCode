@@ -18,6 +18,7 @@ namespace PuzzleGame
         [SerializeField] private CollisionSegmentManager _collisions;
         [SerializeField] private SplineChainParticlesBase _particles;
         [SerializeField] private ChainFinishEffectBase _finishEffect;
+        [SerializeField] private SplineChainTrailBase _trails;
         [Header("Settings")]
         [Space(10)]
         [SerializeField] private SplineComputer _startSpline;
@@ -43,10 +44,15 @@ namespace PuzzleGame
             _segment?.Init(_segmentSettings);
             _collisions?.Init();
             _collisions?.Enable();
-             _moveManager?.Init( _moveSettins);
-            _moveManager?.SetStartPositions(_startSpline);
+
             _particles?.Init(null);
             _particles.Enable();
+            _trails?.Init();
+            _trails?.Enable();
+
+            _moveManager?.Init( _moveSettins);
+            _moveManager?.SetStartPositions(_startSpline);
+
             _moveManager.MoveStarted += OnMoveStart;
             _moveManager.MoveStopped += OnMoveStop;
          
@@ -77,14 +83,16 @@ namespace PuzzleGame
             }
             if (Number == finish.GetNumber())
             {
+                Vector3 fnishPoint = finish.GetFinishPoint();
                 _particles.Disable();
                 _collisions?.Disable();
                 _finish = finish;
+                _trails.OnFinish(fnishPoint);
                 Debug.Log("<color=green> Matched </color>");
                 FinishMatcherController.Instance.ChainFinished(Number);
                 finish.OnReached();
                 _finishEffect.OnEffectEnd = OnChainEaten;
-                _finishEffect.ExecuteEffect(finish.GetFinishPoint());
+                _finishEffect.ExecuteEffect(fnishPoint);
                 _moveManager.Disable();
                 _soundFXChannel.RaiseEventPlay(SoundNames.SpaghettiEat.ToString());
              //   CameraController.Instance.MoveToFinishCP(Number);
