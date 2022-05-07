@@ -39,7 +39,7 @@ namespace PuzzleGame
 
         public override void OnFinishEnd()
         {
-            _anim?.Play("Idle");
+             _anim?.Play("Idle");
         }
 
         public override void SetParticlesHandle(object particles)

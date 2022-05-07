@@ -21,10 +21,11 @@ namespace PuzzleGame
         [SerializeField] private SplineChainTrailBase _trails;
         [Header("Settings")]
         [Space(10)]
-        [SerializeField] private SplineComputer _startSpline;
+        private SplineComputer _startSpline;
         [SerializeField] private SplineChainMoveSettings _moveSettins;
         [SerializeField] private SpaghettiSegmentSettings _segmentSettings;
-
+        [Space(10)]
+        [SerializeField] private TutorLevelEffect _tutor;
         private void Awake()
         {
             InitSelf();
@@ -51,6 +52,7 @@ namespace PuzzleGame
             _trails?.Enable();
 
             _moveManager?.Init( _moveSettins);
+            _startSpline = _moveSettins.AvailableSplines[0];
             _moveManager?.SetStartPositions(_startSpline);
 
             _moveManager.MoveStarted += OnMoveStart;
@@ -60,6 +62,7 @@ namespace PuzzleGame
         private void OnMoveStart()
         {
             FinishMatcherController.Instance.OnChainSelected(Number);
+            _tutor?.OnClick();
         }
         private void OnMoveStop()
         {
@@ -68,9 +71,8 @@ namespace PuzzleGame
 
         public void OnOtherChainCollision(Vector3 position)
         {
-            if (_moveManager.IsMoving == false)
-                return;
-            _moveManager.Bounce(position);
+            if (_moveManager.IsMoving)
+                _moveManager.Bounce(position);
         }
 
         private IFinish _finish;
@@ -90,7 +92,7 @@ namespace PuzzleGame
                 _trails.OnFinish(fnishPoint);
                 Debug.Log("<color=green> Matched </color>");
                 FinishMatcherController.Instance.ChainFinished(Number);
-                finish.OnReached();
+                finish?.OnReached();
                 _finishEffect.OnEffectEnd = OnChainEaten;
                 _finishEffect.ExecuteEffect(fnishPoint);
                 _moveManager.Disable();
@@ -101,20 +103,21 @@ namespace PuzzleGame
             else
             {
                 Debug.Log("<color=red> Not Matched </color>");
-                _soundFXChannel.RaiseEventPlay(SoundNames.FinishWrong.ToString());
+                _soundFXChannel?.RaiseEventPlay(SoundNames.FinishWrong.ToString());
 
-                finish.OnWrong();
+                finish?.OnWrong();
             }
         }
         
 
         public void OnChainEaten()
         {
-            _finish.OnCompleted();
-        //    CameraController.Instance.MoveToDefaultPos();
-            _soundFXChannel.RaiseEventPlay(SoundNames.FinishCorrect.ToString());
-            gameObject.SetActive(false);
-
+            if (this)
+            {
+                _finish?.OnCompleted();
+                _soundFXChannel?.RaiseEventPlay(SoundNames.FinishCorrect.ToString());
+                gameObject?.SetActive(false);
+            }
         }
 
 

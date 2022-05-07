@@ -52,10 +52,26 @@ namespace PuzzleGame
                 Debug.LogError("Passing null start spline");
                 return;
             }
-            Vector3 leftStart = startSpline.Project(_leftNode.transform.position).position;
-            Vector3 rightStart = startSpline.Project(_rightNode.transform.position).position;
-            _leftNode.transform.position = leftStart;
-            _rightNode.transform.position = rightStart;
+            SplineSample sample_L = startSpline.Project(_leftNode.transform.position);
+            SplineSample sample_R = startSpline.Project(_rightNode.transform.position);
+            if(sample_L.percent > sample_R.percent)
+            {
+                SplineChainMoveNode temp = _leftNode;
+                _leftNode = _rightNode;
+                _rightNode = temp;
+                _leftNode.transform.position = sample_R.position;
+                _rightNode.transform.position = sample_L.position;
+
+            }
+            else
+            {
+                _leftNode.transform.position = sample_L.position;
+                _rightNode.transform.position = sample_R.position;
+            }
+            //Vector3 leftStart = startSpline.Project(_leftNode.transform.position).position;
+            //Vector3 rightStart = startSpline.Project(_rightNode.transform.position).position;
+            //_leftNode.transform.position = leftStart;
+            //_rightNode.transform.position = rightStart;
             SetCurrentSpline(startSpline);
             OnPositionChaned();
         }
@@ -248,18 +264,13 @@ namespace PuzzleGame
                 OnBounceMiddle(hitPos);
                 await LeanForward(leanPercent );
             }
-
-            if(IsMoving == true)
-            {
-               // _raycasting = StartCoroutine(MouseRaycasting());
-            }
             _isLeaning = false;
         }
         private void OnBounceMiddle(Vector3 pos)
         {
-            HitCrossManager.Instance.ShowCross(pos);
             _soundFXChannel?.RaiseEventPlay(SoundNames.FinishWrong.ToString());
             _camShakeChannel?.RaiseEventCameraShake();
+            HitCrossManager.Instance.ShowCross(pos);
         }
         private async Task LeanForward(float percent)
         {

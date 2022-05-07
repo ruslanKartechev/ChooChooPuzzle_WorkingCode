@@ -22,6 +22,7 @@ namespace CommonGame
         public InputController _controlls;
         public UIManager _ui;
 
+
         private void Start()
         {
             if (UseSound)

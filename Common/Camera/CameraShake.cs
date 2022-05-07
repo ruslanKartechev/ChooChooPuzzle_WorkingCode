@@ -6,16 +6,17 @@ namespace CommonGame
 
     public class CameraShake : MonoBehaviour
     {
-        private CamShakeSettings _settings;
+        [SerializeField] private CamShakeSettings _settings;
         private Coroutine _shaking;
         private Vector3 startLocalPosition;
 
-        public void Init(CameraController controller, CamShakeSettings settings)
+        public void Init(CamShakeSettings settings)
         {
             _settings = settings;
         }
         public void Shake()
         {
+            if (_settings == null) { Debug.Log("shaking settings not assigned");return; }
             if (_shaking != null) StopCoroutine(_shaking);
             _shaking = StartCoroutine(Shaking(_settings.Duration, _settings.Magnitude));
         }

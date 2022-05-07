@@ -9,8 +9,6 @@ namespace CommonGame
     {
         [Header("Event Channels")]
         public CameraShakeChannelSO _camShakeChannel;
-        [Header("Settings")]
-        public CamShakeSettings _ShakeSettings;
         public CameraMoverViewPoints _moverSettings;
         [Header("Components")]
         public CameraShake _shakeManager;
@@ -22,14 +20,13 @@ namespace CommonGame
 
         private void Start()
         {
-            _shakeManager.Init(this, _ShakeSettings);
             _mover.Init(_moverSettings);
             _mover.SetDefault(transform.position, transform.rotation);
         }
 
         public void Shake()
         {
-            _shakeManager.Shake();
+            _shakeManager?.Shake();
         }
         public void SetCameraCP(Transform target, ChainNumber number)
         {
@@ -42,7 +39,6 @@ namespace CommonGame
         }
         public void MoveToDefaultPos()
         {
-
             _mover?.MoveToDefaultPosition();
         }
 

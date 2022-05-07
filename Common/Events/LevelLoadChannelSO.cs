@@ -13,7 +13,7 @@ namespace CommonGame.Events
         public Action<int> LoadLevel;
         public UnityAction<int> OnLevelLoaded;
 
-        public void RaiseEventReload()
+        public void RaiseReload()
         {
             if (ReloadCurrentLevel != null)
             {
@@ -24,7 +24,7 @@ namespace CommonGame.Events
                 Debug.Log("LoadNext action is null");
             }
         }
-        public void RaiseEventLoadNext()
+        public void RaiseLoadNext()
         {
             if (LoadNext != null)
             {
@@ -35,7 +35,7 @@ namespace CommonGame.Events
                 Debug.Log("LoadNext action is null");
             }
         }
-        public void RaiseEventLoadLast()
+        public void RaiseLoadLast()
         {
             if (LoadLast != null)
             {
@@ -46,7 +46,7 @@ namespace CommonGame.Events
                 Debug.Log("LoadNext action is null");
             }
         }
-        public void RaiseEventLevelLoad(int levelIndex)
+        public void RaiseLevelLoad(int levelIndex)
         {
             if (LoadLevel != null)
             {

@@ -8,9 +8,9 @@ namespace PuzzleGame
     {
         [SerializeField] private Transform _leftEnd;
         [SerializeField] private Transform _rightEnd;
-        [Space(6)]
-        [SerializeField] private TrailRenderer _leftTrail;
-        [SerializeField] private TrailRenderer _rightTrail;
+        [Space(5)]
+        [SerializeField] private ColorSO _colorSource;
+        [Space(5)]
         [SerializeField] private ParticleSystem _leftParticles;
         [SerializeField] private ParticleSystem _rightParticles;
 
@@ -23,6 +23,20 @@ namespace PuzzleGame
         {
             _leftParticles.Stop();
             _rightParticles.Stop();
+            if(_colorSource != null)
+            {
+                Debug.Log("Settings trail color from SO");
+                ParticleSystem.MainModule mainL = _leftParticles.main;
+                mainL.startColor = _colorSource.GetColor();
+                ParticleSystem.ColorOverLifetimeModule colorL = _leftParticles.colorOverLifetime;
+                colorL.color = _colorSource.GetLiftimeColor();
+
+                ParticleSystem.MainModule mainR = _rightParticles.main;
+                mainR.startColor = _colorSource.GetColor();
+                ParticleSystem.ColorOverLifetimeModule colorR = _rightParticles.colorOverLifetime;
+                colorR.color = _colorSource.GetLiftimeColor();
+            }
+
         }
         public override void Disable()
         {
@@ -33,24 +47,21 @@ namespace PuzzleGame
 
         public override void Enable()
         {
-            EnableLeft();
+            _mover.PositionChanged += UpdatePositions;
+            _mover.MoveStarted += OnMoveStart;
+            _mover.MoveStopped += OnMoveStop;
         }
 
         public override void Init()
         {
-            _mover.PositionChanged += UpdatePositions;
-            _mover.MoveStarted += OnMoveStart;
-            _mover.MoveStopped += OnMoveStop;
-            //EnableLeft();
-            //_mover.SplineChanged += SetSpline;
+
         }
 
         private void OnMoveStart()
         {
-            if (_currentDir == MoveDirection.forward)
-                EnableLeft();
-            else
-                EnableRight();
+            _rightParticles.Play();
+            _leftParticles.Play();
+            UpdatePositions();
         }
         private void OnMoveStop()
         {
@@ -60,48 +71,17 @@ namespace PuzzleGame
 
         private void UpdatePositions()
         {
-            //_leftTrail.transform.position = _leftEnd.transform.position;
-            //_rightTrail.transform.position = _rightEnd.transform.position;
-            //_leftTrail.transform.rotation = Quaternion.LookRotation(Vector3.up);
-            //_rightTrail.transform.rotation = Quaternion.LookRotation(Vector3.up);
-
             _leftParticles.transform.position = _leftEnd.transform.position;
             _rightParticles.transform.position = _rightEnd.transform.position;
-            if (_mover.MovingDirection != _currentDir)
-            {
-                _currentDir = _mover.MovingDirection;
-                if (_mover.MovingDirection == MoveDirection.backward)
-                {
-                    EnableRight();              
-                }
-                else
-                {
-                    EnableLeft();
-                }
-            }
-        }
-
-        public void SetSpline(SplineComputer _spline)
-        {
-            _pointsCalculator.CurrentSpline = _spline;
-            UpdatePositions();
         }
 
         private void EnableLeft()
         {
-            //_leftTrail.enabled = true;
-            //_rightTrail.Clear();
-            //_rightTrail.enabled = false;
-
             _rightParticles.Stop();
             _leftParticles.Play();
         }
         private void EnableRight()
         {
-            //_leftTrail.enabled = false;
-            //_leftTrail.Clear();
-            //_rightTrail.enabled = true;
-
             _rightParticles.Play();
             _leftParticles.Stop();
         }

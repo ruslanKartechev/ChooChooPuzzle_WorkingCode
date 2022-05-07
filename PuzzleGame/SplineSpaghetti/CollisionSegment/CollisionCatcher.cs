@@ -7,7 +7,10 @@ namespace PuzzleGame
         public Action<Collider> OnCollision;
         private void OnTriggerEnter(Collider other)
         {
-            OnCollision?.Invoke(other);   
+            if(OnCollision != null)
+            {
+                OnCollision.Invoke(other);
+            }
         }
     }
 }

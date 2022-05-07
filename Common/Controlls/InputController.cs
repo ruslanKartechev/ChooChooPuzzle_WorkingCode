@@ -13,7 +13,7 @@ namespace CommonGame.Controlls
         {
             if (_manager == null) return;
             _manager.Init(null);
-            _levelFinishChannel.OnLevelFinished += OnLevelEnd;
+            _levelFinishChannel.OnLevelFinished.AddListener(OnLevelEnd);
             _levelStartChannel.OnLevelStarted.AddListener(OnLevelStarted);
             Input.simulateMouseWithTouches = true;
             if (IsDebug)

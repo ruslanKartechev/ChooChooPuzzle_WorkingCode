@@ -15,7 +15,7 @@ namespace PuzzleGame
         public void Init()
         {
             Data = GetComponent<FinishEffectsData>();
-            _levelFinishChannel.OnLevelFinished += OnLevelEnd;
+            _levelFinishChannel.OnLevelFinished.AddListener(OnLevelEnd);
             Data.ConfettiManager.InitParticles(Data.Confetti);
         }
         public void Play()

@@ -31,7 +31,7 @@ namespace CommonGame.UI
 
             _levelStartChannel.OnLevelStarted.AddListener(OnLevelStarted);
             _levelLoadChannel.OnLevelLoaded += OnLevelLoaded;
-            _levelFinishChannel.OnLevelFinished += OnLevelFinished;
+            _levelFinishChannel.OnLevelFinished.AddListener(OnLevelFinished);
         }
 
         private void OnLevelLoaded(int index)

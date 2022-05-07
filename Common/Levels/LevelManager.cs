@@ -95,7 +95,7 @@ namespace CommonGame
                 }
 #else
             mLoader.ClearLevel();
-            mLoader.Load(level);
+            mLoader.Load(level,index);
 #endif
             }
         }

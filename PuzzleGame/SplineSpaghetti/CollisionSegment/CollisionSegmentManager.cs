@@ -23,26 +23,21 @@ namespace PuzzleGame
 
         private SegmentPointsCalculator _pointsCalculator;
         private List<CollisionCatcher> _catchers;
+        bool _spawned = false;
         public void Init()
         {
             if(_pointsCalculator == null)
                 _pointsCalculator = new SegmentPointsCalculator();
-            if(Application.isPlaying)
-                SpawnColliders();
+            //if (Application.isPlaying)
+            //    SpawnColliders();
 
         }
         public void Enable()
         {
-            if (Application.isPlaying)
-            {
-                _moveManager.SplineChanged += SetCurrentSpline;
-                _moveManager.PositionChanged += UpdatePositions;
-                for (int i = 0; i < _catchers.Count; i++)
-                {
-                    _catchers[i].gameObject.SetActive(true);
-                }
-            }
+            _moveManager.SplineChanged += SetCurrentSpline;
+            _moveManager.PositionChanged += UpdatePositions;
         }
+
         public void Disable()
         {
             _moveManager.SplineChanged -= SetCurrentSpline;
@@ -52,15 +47,26 @@ namespace PuzzleGame
                 _catchers[i].gameObject.SetActive(false);
             }
         }
+
         private void SetCurrentSpline(SplineComputer spline)
         {
             _pointsCalculator.CurrentSpline = spline;
+            if(_spawned == false)
+            {
+                if (Application.isPlaying)
+                {
+                    SpawnColliders();
+                    _spawned = true;
+                }
+            }
             UpdatePositions();
         }
+
         private void SpawnColliders()
         {
-            _catchers = new List<CollisionCatcher>(_count);
-            for (int i=0; i < _count; i++)
+            int count = (int)( _pointsCalculator.CurrentSpline.CalculateLength() / (_colliderSize * 4f * 1.1f) );
+            _catchers = new List<CollisionCatcher>(count);
+            for (int i=0; i < count; i++)
             {
                 GameObject go = new GameObject(_childName + " " + i.ToString());
                 go.transform.parent = transform;
@@ -77,8 +83,9 @@ namespace PuzzleGame
                 catcher.OnCollision = OnCollision;
                 _catchers.Add(catcher);
             }
-            _pointsCalculator.PointCount = _count;
+            _pointsCalculator.PointCount = count;
         }
+
         private void UpdatePositions()
         {
             if (_pointsCalculator == null || _catchers == null || _catchers.Count == 0)
